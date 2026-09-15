@@ -65,6 +65,15 @@ struct BladCommands: Commands {
                 .disabled(model.activeDocument == nil)
         }
 
+        CommandGroup(after: .pasteboard) {
+            Divider()
+            Button("Voeg afbeelding in…") {
+                NSApp.sendAction(#selector(EditorTextView.insertImageFromFile(_:)), to: nil, from: nil)
+            }
+            .keyboardShortcut("i", modifiers: [.command, .shift])
+            .disabled(model.activeDocument == nil || model.activeDocument?.isReading == true)
+        }
+
         CommandGroup(after: .sidebar) {
             Button(model.isFocusMode ? "Verlaat focusmodus" : "Focusmodus") { model.toggleFocus() }
                 .keyboardShortcut("f", modifiers: [.command, .shift])

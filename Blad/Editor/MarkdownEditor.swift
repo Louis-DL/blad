@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 /// Bridges the AppKit text view into SwiftUI.
 struct MarkdownEditor: NSViewRepresentable {
@@ -14,6 +15,8 @@ struct MarkdownEditor: NSViewRepresentable {
     let onOpenPage: (String) -> Void
     /// ⌘-click on a markdown link or URL.
     let onOpenLink: (String) -> Void
+    /// Saves pasted or dropped images next to the page and returns the markdown to insert.
+    let importImages: (ImageImporter.Source) -> [String]
     let onEscape: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -29,6 +32,8 @@ struct MarkdownEditor: NSViewRepresentable {
         textView.onOpenPage = { [weak coordinator] in coordinator?.parent.onOpenPage($0) }
         textView.onOpenLink = { [weak coordinator] in coordinator?.parent.onOpenLink($0) }
         textView.pages = { [weak coordinator] in coordinator?.parent.pages() ?? [] }
+        textView.importImages = { [weak coordinator] in coordinator?.parent.importImages($0) ?? [] }
+        textView.baseURL = document.url.deletingLastPathComponent()
         coordinator.textView = textView
 
         let scrollView = NSScrollView()
@@ -58,6 +63,9 @@ struct MarkdownEditor: NSViewRepresentable {
         let coordinator = context.coordinator
         coordinator.parent = self
         guard let textView = coordinator.textView else { return }
+
+        let baseURL = document.url.deletingLastPathComponent()
+        if textView.baseURL != baseURL { textView.baseURL = baseURL }
 
         if scrollView.isHidden == isActive {
             scrollView.isHidden = !isActive
@@ -117,6 +125,10 @@ final class EditorTextView: NSTextView {
     var onOpenPage: ((String) -> Void)?
     var onOpenLink: ((String) -> Void)?
     var pages: (() -> [PageRef])?
+    var importImages: ((ImageImporter.Source) -> [String])?
+    /// The page's folder, for resolving relative image paths.
+    var baseURL: URL?
+    private var imageCache: [URL: NSImage] = [:]
     private let ownedStorage: NSTextStorage
 
     init(styler: MarkdownStyler) {
@@ -150,6 +162,7 @@ final class EditorTextView: NSTextView {
         isAutomaticSpellingCorrectionEnabled = false
         isAutomaticLinkDetectionEnabled = false
         isContinuousSpellCheckingEnabled = false
+        styler.imageSize = { [weak self] in self?.previewSize(for: $0) }
     }
 
     required init?(coder: NSCoder) {
@@ -373,6 +386,23 @@ final class EditorTextView: NSTextView {
                 NSBezierPath(roundedRect: pill, xRadius: 4, yRadius: 4).fill()
             }
         }
+
+        // Image previews, in the space the styler left under each image line.
+        storage.enumerateAttribute(.imagePreview, in: visible) { value, range, _ in
+            guard let source = value as? String, let image = previewImage(for: source), let size = previewSize(for: source) else { return }
+            let lastGlyph = layoutManager.glyphIndexForCharacter(at: max(range.location, NSMaxRange(range) - 1))
+            let line = layoutManager.lineFragmentUsedRect(forGlyphAt: lastGlyph, effectiveRange: nil)
+            let frame = NSRect(x: origin.x + styler.gutter, y: origin.y + line.maxY + 8, width: size.width, height: size.height)
+            NSGraphicsContext.saveGraphicsState()
+            NSBezierPath(roundedRect: frame, xRadius: 8, yRadius: 8).addClip()
+            image.draw(in: frame, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: [.interpolation: NSImageInterpolation.high.rawValue])
+            NSGraphicsContext.restoreGraphicsState()
+            // A hairline edge, so screenshots with a white background don't melt into the page.
+            styler.style.theme.secondary.withAlphaComponent(0.3).setStroke()
+            let edge = NSBezierPath(roundedRect: frame.insetBy(dx: 0.25, dy: 0.25), xRadius: 8, yRadius: 8)
+            edge.lineWidth = 0.5
+            edge.stroke()
+        }
     }
 
     override func shouldChangeText(in affectedCharRange: NSRange, replacementString: String?) -> Bool {
@@ -413,6 +443,85 @@ final class EditorTextView: NSTextView {
             }
         }
         super.mouseDown(with: event)
+    }
+
+    // MARK: Images
+
+    /// ⌘V with a screenshot, a copied picture or copied image files saves them next to the page.
+    override func paste(_ sender: Any?) {
+        if let source = ImageImporter.source(from: .general, allowsText: false), insertImages(source) { return }
+        super.paste(sender)
+    }
+
+    /// Lets Paste stay enabled when the clipboard only holds an image.
+    override var readablePasteboardTypes: [NSPasteboard.PasteboardType] {
+        super.readablePasteboardTypes + [.png, .tiff]
+    }
+
+    override var acceptableDragTypes: [NSPasteboard.PasteboardType] {
+        super.acceptableDragTypes + [.png, .tiff]
+    }
+
+    override func dragOperation(for dragInfo: any NSDraggingInfo, type: NSPasteboard.PasteboardType) -> NSDragOperation {
+        ImageImporter.hasImages(on: dragInfo.draggingPasteboard, allowsText: true) ? .copy : super.dragOperation(for: dragInfo, type: type)
+    }
+
+    override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
+        if let source = ImageImporter.source(from: sender.draggingPasteboard, allowsText: true) {
+            let point = convert(sender.draggingLocation, from: nil)
+            setSelectedRange(NSRange(location: characterIndexForInsertion(at: point), length: 0))
+            if insertImages(source) { return true }
+        }
+        return super.performDragOperation(sender)
+    }
+
+    /// Wijzig ▸ Voeg afbeelding in…
+    @objc func insertImageFromFile(_ sender: Any?) {
+        guard let window else { return }
+        let panel = NSOpenPanel()
+        panel.title = "Voeg afbeelding in"
+        panel.prompt = "Voeg in"
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = true
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK else { return }
+            self?.insertImages(.files(panel.urls))
+        }
+    }
+
+    /// Inserts the images' markdown at the caret, each on its own line so it gets a preview.
+    @discardableResult
+    private func insertImages(_ source: ImageImporter.Source) -> Bool {
+        guard let snippets = importImages?(source), !snippets.isEmpty else { return false }
+        let text = string as NSString
+        let selection = selectedRange()
+        let startsLine = selection.location == 0 || text.character(at: selection.location - 1) == 10
+        let end = NSMaxRange(selection)
+        let endsLine = end >= text.length || text.character(at: end) == 10
+        let markdown = (startsLine ? "" : "\n") + snippets.joined(separator: "\n") + (endsLine ? "" : "\n")
+        insertText(markdown, replacementRange: selection)
+        return true
+    }
+
+    /// Local images only; the editor never waits on the network.
+    private func previewImage(for source: String) -> NSImage? {
+        guard let baseURL else { return nil }
+        // Resolve against the folder itself; without a trailing slash, "assets/x.png" would land one folder up.
+        let folder = URL(fileURLWithPath: baseURL.path, isDirectory: true)
+        let encoded = source.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? source
+        guard let url = (URL(string: source, relativeTo: folder) ?? URL(string: encoded, relativeTo: folder))?.absoluteURL,
+              url.isFileURL else { return nil }
+        if let cached = imageCache[url] { return cached }
+        guard let image = NSImage(contentsOf: url) else { return nil }
+        imageCache[url] = image
+        return image
+    }
+
+    /// Never wider than the text column, never taller than 360 pt, and never scaled up.
+    private func previewSize(for source: String) -> CGSize? {
+        guard let image = previewImage(for: source), image.size.width > 0, image.size.height > 0 else { return nil }
+        let scale = min(1, styler.style.lineWidth / image.size.width, 360 / image.size.height)
+        return CGSize(width: (image.size.width * scale).rounded(), height: (image.size.height * scale).rounded())
     }
 
     // MARK: Link picker

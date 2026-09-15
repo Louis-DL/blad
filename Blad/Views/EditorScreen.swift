@@ -24,6 +24,14 @@ struct EditorScreen: View {
                 pages: { model.pageRefs },
                 onOpenPage: { model.openPage(named: $0, from: document.url) },
                 onOpenLink: { model.openLink($0, from: document.url) },
+                importImages: { source in
+                    do {
+                        return try ImageImporter.importImages(source, for: document.url)
+                    } catch {
+                        model.present(error, "Kon de afbeelding niet bewaren")
+                        return []
+                    }
+                },
                 onEscape: { model.toggleFocus() }
             )
             .opacity(document.isReading ? 0 : 1)

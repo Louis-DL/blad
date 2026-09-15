@@ -19,6 +19,8 @@ extension NSAttributedString.Key {
     static let wikiLink = NSAttributedString.Key("BladWikiLink")
     /// The destination of a markdown link or bare URL, for ⌘-click.
     static let linkTarget = NSAttributedString.Key("BladLinkTarget")
+    /// The source of an image previewed under its markdown line.
+    static let imagePreview = NSAttributedString.Key("BladImagePreview")
 }
 
 /// Styles markdown in place. The syntax stays visible, just quieter than the words around it,
@@ -28,6 +30,9 @@ final class MarkdownStyler {
     private(set) var bodyFont: NSFont
     private(set) var codeFont: NSFont
     private var lastFenceCount = -1
+
+    /// Display size for an image path, or nil when there's nothing to preview.
+    var imageSize: ((String) -> CGSize?)?
 
     /// Room on both sides of the text column where markers hang.
     var gutter: CGFloat { (style.fontSize * 3.2).rounded() }
@@ -116,6 +121,16 @@ final class MarkdownStyler {
         let nsLine = line as NSString
         let local = NSRange(location: 0, length: nsLine.length)
         let offset = content.location
+
+        if let match = Self.imageLine.firstMatch(in: line, range: local) {
+            // The markup goes quiet; the image itself is drawn in the space left below the line.
+            let source = nsLine.substring(with: match.range(at: 1))
+            storage.addAttributes([.font: codeFont, .foregroundColor: theme.secondary, .linkTarget: source], range: content)
+            if let size = imageSize?(source) {
+                storage.addAttributes([.paragraphStyle: paragraph(spacingAfter: size.height + 20), .imagePreview: source], range: lineRange)
+            }
+            return
+        }
 
         if let match = Self.heading.firstMatch(in: line, range: local) {
             let level = match.range(at: 1).length
@@ -222,11 +237,13 @@ final class MarkdownStyler {
         indent: CGFloat = 0,
         tailIndent: CGFloat = 0,
         spacingBefore: CGFloat = 0,
+        spacingAfter: CGFloat = 0,
         lineHeight: CGFloat = 1.4
     ) -> NSParagraphStyle {
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineHeightMultiple = lineHeight
         paragraph.paragraphSpacingBefore = spacingBefore
+        paragraph.paragraphSpacing = spacingAfter
         paragraph.headIndent = gutter + indent
         paragraph.firstLineHeadIndent = firstLineIndent ?? (gutter + indent)
         paragraph.tailIndent = -(gutter + tailIndent)
@@ -268,4 +285,6 @@ final class MarkdownStyler {
     private static let strikethrough = regex(#"~~(?=\S)(.+?)(?<=\S)~~"#)
     private static let link = regex(#"!?\[([^\]\n]+)\]\(([^)\s]*)(?:\s+"[^"]*")?\)"#)
     private static let bareURL = regex(#"(?<![(<\w])https?://[^\s)>\]]+"#)
+    /// A line holding only `![alt](path)`.
+    private static let imageLine = regex(#"^[ \t]*!\[[^\]\n]*\]\(([^)\s]+)(?:[ \t]+"[^"]*")?\)[ \t]*$"#)
 }
