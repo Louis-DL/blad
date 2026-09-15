@@ -1,6 +1,9 @@
 # macOS
 .DS_Store
 
+# Packaged releases (scripts/dmg/make-dmg.sh)
+dist/
+
 # Xcode
 build/
 DerivedData/
