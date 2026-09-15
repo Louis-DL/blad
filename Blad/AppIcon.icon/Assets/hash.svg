@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- The heading marker that hangs in the margin, as in Blad's editor. -->
+  <g transform="translate(225 413) skewX(-10)" fill="#B4532A">
+    <rect x="-40" y="-66" width="26" height="132" rx="13"/>
+    <rect x="14" y="-66" width="26" height="132" rx="13"/>
+    <rect x="-66" y="-39" width="132" height="26" rx="13"/>
+    <rect x="-66" y="13" width="132" height="26" rx="13"/>
+  </g>
+</svg>

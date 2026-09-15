@@ -1,0 +1,62 @@
+{
+  "fill" : {
+    "solid" : "srgb:0.95686,0.93725,0.89804,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "srgb:0.89020,0.60392,0.35686,1.00000"
+              }
+            }
+          ],
+          "image-name" : "hash.svg",
+          "name" : "hash"
+        }
+      ],
+      "shadow" : {
+        "kind" : "layer-color",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "fill-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "srgb:0.89804,0.88235,0.84706,1.00000"
+              }
+            }
+          ],
+          "image-name" : "heading.svg",
+          "name" : "heading"
+        },
+        {
+          "image-name" : "lines.svg",
+          "name" : "lines"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.35
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : "shared"
+  }
+}
