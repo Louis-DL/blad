@@ -1,5 +1,8 @@
-import AppKit
+import Foundation
 import UniformTypeIdentifiers
+#if os(macOS)
+import AppKit
+#endif
 
 /// Saves pasted, dropped or chosen images into an `assets` folder next to the page,
 /// and returns the markdown that shows them. Plain files and relative links, so the
@@ -7,11 +10,12 @@ import UniformTypeIdentifiers
 enum ImageImporter {
     enum Source {
         case files([URL])
-        case data(Data)
+        case data(Data, pathExtension: String = "png")
     }
 
     static let folderName = "assets"
 
+    #if os(macOS)
     /// A quick check for drag feedback, without reading any image data.
     static func hasImages(on pasteboard: NSPasteboard, allowsText: Bool) -> Bool {
         if !imageFiles(on: pasteboard).isEmpty { return true }
@@ -27,6 +31,8 @@ enum ImageImporter {
         guard hasImages(on: pasteboard, allowsText: allowsText), let data = pngData(from: pasteboard) else { return nil }
         return .data(data)
     }
+
+    #endif
 
     static func importImages(_ source: Source, for page: URL) throws -> [String] {
         let pageFolder = page.deletingLastPathComponent().standardizedFileURL
@@ -48,10 +54,10 @@ enum ImageImporter {
                 return markdown(for: destination, alt: name, pageFolder: pageFolder)
             }
 
-        case .data(let data):
+        case .data(let data, let pathExtension):
             try fileManager.createDirectory(at: assets, withIntermediateDirectories: true)
             let base = slug(page.deletingPathExtension().lastPathComponent) + "-" + timestamp.string(from: Date())
-            let destination = uniqueURL(in: assets, base: base, pathExtension: "png")
+            let destination = uniqueURL(in: assets, base: base, pathExtension: pathExtension)
             try data.write(to: destination, options: .atomic)
             return [markdown(for: destination, alt: "", pageFolder: pageFolder)]
         }
@@ -59,6 +65,7 @@ enum ImageImporter {
 
     // MARK: - Helpers
 
+    #if os(macOS)
     private static func imageFiles(on pasteboard: NSPasteboard) -> [URL] {
         let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL] ?? []
         return urls.filter { UTType(filenameExtension: $0.pathExtension)?.conforms(to: .image) == true }
@@ -71,6 +78,8 @@ enum ImageImporter {
               let bitmap = NSBitmapImageRep(data: tiff) else { return nil }
         return bitmap.representation(using: .png, properties: [:])
     }
+
+    #endif
 
     private static func markdown(for image: URL, alt: String, pageFolder: URL) -> String {
         var path = image.standardizedFileURL.path

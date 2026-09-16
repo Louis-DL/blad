@@ -1,4 +1,9 @@
+import SwiftUI
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 struct EditorStyle: Equatable {
     var theme: Theme
@@ -8,6 +13,8 @@ struct EditorStyle: Equatable {
     var focusMode: Bool
     var dimsParagraphs: Bool
     var typewriterScrolling: Bool
+    /// Width of the margin where markers hang, in multiples of the font size. Narrower on iPhone.
+    var gutterScale: CGFloat = 3.2
 }
 
 extension NSAttributedString.Key {
@@ -27,15 +34,15 @@ extension NSAttributedString.Key {
 /// and heading and quote markers hang in the margin so the text itself lines up.
 final class MarkdownStyler {
     private(set) var style: EditorStyle
-    private(set) var bodyFont: NSFont
-    private(set) var codeFont: NSFont
+    private(set) var bodyFont: PlatformFont
+    private(set) var codeFont: PlatformFont
     private var lastFenceCount = -1
 
     /// Display size for an image path, or nil when there's nothing to preview.
     var imageSize: ((String) -> CGSize?)?
 
     /// Room on both sides of the text column where markers hang.
-    var gutter: CGFloat { (style.fontSize * 3.2).rounded() }
+    var gutter: CGFloat { (style.fontSize * style.gutterScale).rounded() }
     /// Inner padding of code block panels.
     var codePadding: CGFloat { 14 }
 
@@ -147,7 +154,7 @@ final class MarkdownStyler {
             storage.addAttributes([
                 .paragraphStyle: paragraph(firstLineIndent: max(0, gutter - markerWidth)),
                 .foregroundColor: theme.text.withAlphaComponent(0.75),
-                .font: bodyFont.adding(.italic),
+                .font: bodyFont.adding(italic: true),
             ], range: lineRange)
             storage.addAttribute(.foregroundColor, value: theme.secondary, range: shifted(match.range, by: offset))
         } else if Self.rule.firstMatch(in: line, range: local) != nil {
@@ -195,13 +202,13 @@ final class MarkdownStyler {
 
         for match in Self.bold.matches(in: line, range: local) where isOutsideCode(match.range) {
             let range = shifted(match.range, by: offset)
-            addTraits(.bold, to: storage, in: range)
+            addTraits(bold: true, to: storage, in: range)
             dimMarkers(storage, range: range, length: 2)
         }
         for regex in [Self.italicStar, Self.italicUnderscore] {
             for match in regex.matches(in: line, range: local) where isOutsideCode(match.range) {
                 let range = shifted(match.range, by: offset)
-                addTraits(.italic, to: storage, in: range)
+                addTraits(italic: true, to: storage, in: range)
                 dimMarkers(storage, range: range, length: 1)
             }
         }
@@ -250,10 +257,10 @@ final class MarkdownStyler {
         return paragraph
     }
 
-    private func addTraits(_ traits: NSFontDescriptor.SymbolicTraits, to storage: NSTextStorage, in range: NSRange) {
+    private func addTraits(bold: Bool = false, italic: Bool = false, to storage: NSTextStorage, in range: NSRange) {
         storage.enumerateAttribute(.font, in: range) { value, subrange, _ in
-            guard let font = value as? NSFont else { return }
-            storage.addAttribute(.font, value: font.adding(traits), range: subrange)
+            guard let font = value as? PlatformFont else { return }
+            storage.addAttribute(.font, value: font.adding(bold: bold, italic: italic), range: subrange)
         }
     }
 

@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 
 enum ThemeID: String, CaseIterable, Identifiable {
     case paper, light, night, system
@@ -26,45 +25,45 @@ enum ThemeID: String, CaseIterable, Identifiable {
 }
 
 struct Theme: Equatable {
-    let background: NSColor
-    let text: NSColor
+    let background: PlatformColor
+    let text: PlatformColor
     /// Markdown syntax and other quiet details.
-    let secondary: NSColor
-    let accent: NSColor
-    let codeBackground: NSColor
-    let selection: NSColor
+    let secondary: PlatformColor
+    let accent: PlatformColor
+    let codeBackground: PlatformColor
+    let selection: PlatformColor
     let isDark: Bool
     let hasGrain: Bool
 
     static let paper = Theme(
-        background: NSColor(hex: 0xF4EFE5),
-        text: NSColor(hex: 0x2F2A23),
-        secondary: NSColor(hex: 0xA69D8E),
-        accent: NSColor(hex: 0xB4532A),
-        codeBackground: NSColor(hex: 0x6B5A3E, alpha: 0.075),
-        selection: NSColor(hex: 0xB4532A, alpha: 0.17),
+        background: PlatformColor(hex: 0xF4EFE5),
+        text: PlatformColor(hex: 0x2F2A23),
+        secondary: PlatformColor(hex: 0xA69D8E),
+        accent: PlatformColor(hex: 0xB4532A),
+        codeBackground: PlatformColor(hex: 0x6B5A3E, alpha: 0.075),
+        selection: PlatformColor(hex: 0xB4532A, alpha: 0.17),
         isDark: false,
         hasGrain: true
     )
 
     static let light = Theme(
-        background: NSColor(hex: 0xFBFBFA),
-        text: NSColor(hex: 0x1D1D1F),
-        secondary: NSColor(hex: 0xA1A1A6),
-        accent: NSColor(hex: 0x3569DE),
-        codeBackground: NSColor(hex: 0x1D1D1F, alpha: 0.05),
-        selection: NSColor(hex: 0x3569DE, alpha: 0.16),
+        background: PlatformColor(hex: 0xFBFBFA),
+        text: PlatformColor(hex: 0x1D1D1F),
+        secondary: PlatformColor(hex: 0xA1A1A6),
+        accent: PlatformColor(hex: 0x3569DE),
+        codeBackground: PlatformColor(hex: 0x1D1D1F, alpha: 0.05),
+        selection: PlatformColor(hex: 0x3569DE, alpha: 0.16),
         isDark: false,
         hasGrain: false
     )
 
     static let night = Theme(
-        background: NSColor(hex: 0x1B1A19),
-        text: NSColor(hex: 0xE5E1D8),
-        secondary: NSColor(hex: 0x6F6A62),
-        accent: NSColor(hex: 0xE39A5B),
-        codeBackground: NSColor(hex: 0xFFFFFF, alpha: 0.06),
-        selection: NSColor(hex: 0xE39A5B, alpha: 0.24),
+        background: PlatformColor(hex: 0x1B1A19),
+        text: PlatformColor(hex: 0xE5E1D8),
+        secondary: PlatformColor(hex: 0x6F6A62),
+        accent: PlatformColor(hex: 0xE39A5B),
+        codeBackground: PlatformColor(hex: 0xFFFFFF, alpha: 0.06),
+        selection: PlatformColor(hex: 0xE39A5B, alpha: 0.24),
         isDark: true,
         hasGrain: false
     )
@@ -79,27 +78,16 @@ struct Theme: Equatable {
     }
 }
 
-extension NSColor {
-    convenience init(hex: UInt32, alpha: CGFloat = 1) {
-        self.init(
-            srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
-            green: CGFloat((hex >> 8) & 0xFF) / 255,
-            blue: CGFloat(hex & 0xFF) / 255,
-            alpha: alpha
-        )
-    }
-}
-
-/// The page colour, with a very fine grain for the paper theme.
+/// The page colour, with a paper texture for the paper theme.
 struct PaperBackground: View {
     let theme: Theme
     let showsGrain: Bool
 
     var body: some View {
-        Color(nsColor: theme.background)
+        Color(platform: theme.background)
             .overlay {
                 if showsGrain && theme.hasGrain {
-                    Image(nsImage: PaperTexture.tile)
+                    Image(platformImage: PaperTexture.tile)
                         .resizable(resizingMode: .tile)
                         .allowsHitTesting(false)
                 }
@@ -110,13 +98,24 @@ struct PaperBackground: View {
 enum PaperTexture {
     /// A seamless tile with soft, cloudy changes in tone and a few faint fibres.
     /// Per-pixel specks read as static on screen; paper is uneven at a larger scale.
-    static let tile: NSImage = {
-        // 1024 px drawn at 2× is a 512 pt tile: large enough that the repeat doesn't read as a pattern.
+    static let tile: PlatformImage = {
+        guard let image = drawTile() else { return PlatformImage() }
+        // 1024 px at 2× is a 512 pt tile: large enough that the repeat doesn't read as a pattern.
+        #if os(macOS)
+        return NSImage(cgImage: image, size: NSSize(width: image.width / 2, height: image.height / 2))
+        #else
+        return UIImage(cgImage: image, scale: 2, orientation: .up)
+        #endif
+    }()
+
+    private static func drawTile() -> CGImage? {
         let size = 1024
         // Tone changes are low-frequency, so they are computed small and scaled up smoothly.
         let cloudSize = 256
-        guard let clouds = bitmap(cloudSize), let cloudData = clouds.bitmapData,
-              let rep = bitmap(size) else { return NSImage() }
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
+              let clouds = bitmap(cloudSize, colorSpace),
+              let cloudData = clouds.data?.assumingMemoryBound(to: UInt8.self),
+              let context = bitmap(size, colorSpace) else { return nil }
 
         var random = SplitMix64(state: 0x5EED_B1AD)
 
@@ -142,46 +141,37 @@ enum PaperTexture {
                 cloudData[offset + 3] = UInt8(a)
             }
         }
+        guard let cloudImage = clouds.makeImage() else { return nil }
 
-        if let context = NSGraphicsContext(bitmapImageRep: rep) {
-            NSGraphicsContext.saveGraphicsState()
-            NSGraphicsContext.current = context
-            context.imageInterpolation = .high
-            clouds.draw(in: NSRect(x: 0, y: 0, width: size, height: size))
+        context.interpolationQuality = .high
+        context.draw(cloudImage, in: CGRect(x: 0, y: 0, width: size, height: size))
+        context.setLineCap(.round)
 
-            for _ in 0..<520 {
-                let start = CGPoint(x: random.nextUnit() * Double(size), y: random.nextUnit() * Double(size))
-                let angle = random.nextUnit() * .pi * 2
-                let length = 14 + random.nextUnit() * 44
-                let bend = (random.nextUnit() - 0.5) * 12
-                let end = CGPoint(x: start.x + cos(angle) * length, y: start.y + sin(angle) * length)
-                let control = CGPoint(x: (start.x + end.x) / 2 - sin(angle) * bend, y: (start.y + end.y) / 2 + cos(angle) * bend)
-                let width = 1.0 + random.nextUnit() * 0.9
-                let color = random.nextUnit() < 0.35
-                    ? NSColor(white: 1, alpha: 0.35)
-                    : NSColor(srgbRed: 0.45, green: 0.36, blue: 0.24, alpha: 0.10 + random.nextUnit() * 0.08)
-                color.setStroke()
-                // Draw each fibre at the neighbouring tile offsets too, so fibres cross edges seamlessly.
-                for dx in [-size, 0, size] {
-                    for dy in [-size, 0, size] {
-                        let shift = { (point: CGPoint) in CGPoint(x: point.x + CGFloat(dx), y: point.y + CGFloat(dy)) }
-                        let path = NSBezierPath()
-                        path.move(to: shift(start))
-                        path.curve(to: shift(end), controlPoint1: shift(control), controlPoint2: shift(control))
-                        path.lineWidth = width
-                        path.lineCapStyle = .round
-                        path.stroke()
-                    }
+        for _ in 0..<520 {
+            let start = CGPoint(x: random.nextUnit() * Double(size), y: random.nextUnit() * Double(size))
+            let angle = random.nextUnit() * .pi * 2
+            let length = 14 + random.nextUnit() * 44
+            let bend = (random.nextUnit() - 0.5) * 12
+            let end = CGPoint(x: start.x + cos(angle) * length, y: start.y + sin(angle) * length)
+            let control = CGPoint(x: (start.x + end.x) / 2 - sin(angle) * bend, y: (start.y + end.y) / 2 + cos(angle) * bend)
+            let width = 1.0 + random.nextUnit() * 0.9
+            let color = random.nextUnit() < 0.35
+                ? CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 0.35)
+                : CGColor(srgbRed: 0.45, green: 0.36, blue: 0.24, alpha: 0.10 + random.nextUnit() * 0.08)
+            context.setStrokeColor(color)
+            context.setLineWidth(width)
+            // Draw each fibre at the neighbouring tile offsets too, so fibres cross edges seamlessly.
+            for dx in [-size, 0, size] {
+                for dy in [-size, 0, size] {
+                    let shift = { (point: CGPoint) in CGPoint(x: point.x + CGFloat(dx), y: point.y + CGFloat(dy)) }
+                    context.move(to: shift(start))
+                    context.addCurve(to: shift(end), control1: shift(control), control2: shift(control))
+                    context.strokePath()
                 }
             }
-            NSGraphicsContext.restoreGraphicsState()
         }
-
-        rep.size = NSSize(width: size / 2, height: size / 2)
-        let image = NSImage(size: rep.size)
-        image.addRepresentation(rep)
-        return image
-    }()
+        return context.makeImage()
+    }
 
     private static func sample(_ lattice: [Double], cells: Int, x: Double, y: Double) -> Double {
         let fx = x * Double(cells)
@@ -199,11 +189,10 @@ enum PaperTexture {
         t * t * (3 - 2 * t)
     }
 
-    private static func bitmap(_ pixels: Int) -> NSBitmapImageRep? {
-        NSBitmapImageRep(
-            bitmapDataPlanes: nil, pixelsWide: pixels, pixelsHigh: pixels,
-            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+    private static func bitmap(_ pixels: Int, _ colorSpace: CGColorSpace) -> CGContext? {
+        CGContext(
+            data: nil, width: pixels, height: pixels, bitsPerComponent: 8, bytesPerRow: pixels * 4,
+            space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         )
     }
 }

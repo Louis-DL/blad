@@ -20,7 +20,7 @@ APP="$WORK/build/Build/Products/Release/Blad.app"
 
 echo "› Drawing the background"
 xcrun swiftc -swift-version 5 -default-isolation MainActor -parse-as-library -O \
-  "$ROOT/Blad/Design/Theme.swift" "$ROOT/Blad/Design/EditorFont.swift" "$ROOT/scripts/dmg/background.swift" \
+  "$ROOT/Shared/Design/Platform.swift" "$ROOT/Shared/Design/Theme.swift" "$ROOT/Shared/Design/EditorFont.swift" "$ROOT/scripts/dmg/background.swift" \
   -o "$WORK/background"
 mkdir -p "$WORK/art"
 "$WORK/background" "$WORK/art"

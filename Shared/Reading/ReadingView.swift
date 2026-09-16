@@ -1,5 +1,9 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#else
+import UIKit
+#endif
 
 /// Reading mode: the same page, rendered without the markdown syntax.
 struct ReadingView: View {
@@ -48,10 +52,10 @@ struct ReadingContent: View {
     /// False when these blocks continue a page, so a leading heading keeps its space above.
     var isFirstBlockAtTop = true
 
-    private var textColor: Color { Color(nsColor: theme.text) }
-    private var secondary: Color { Color(nsColor: theme.secondary) }
-    private var accent: Color { Color(nsColor: theme.accent) }
-    private var codeBackground: Color { Color(nsColor: theme.codeBackground) }
+    private var textColor: Color { Color(platform: theme.text) }
+    private var secondary: Color { Color(platform: theme.secondary) }
+    private var accent: Color { Color(platform: theme.accent) }
+    private var codeBackground: Color { Color(platform: theme.codeBackground) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: fontSize * 0.95) {
@@ -211,7 +215,7 @@ struct ReadingContent: View {
             .background(isShaded ? codeBackground : .clear)
     }
 
-    private func font(_ scale: CGFloat = 1, weight: NSFont.Weight = .regular) -> Font {
+    private func font(_ scale: CGFloat = 1, weight: PlatformFont.Weight = .regular) -> Font {
         Font(EditorFont.font(id: fontID, size: (fontSize * scale).rounded(), weight: weight) as CTFont)
     }
 
@@ -245,7 +249,7 @@ private struct BacklinksSection: View {
                 .font(.system(size: 11, weight: .semibold))
                 .textCase(.uppercase)
                 .tracking(0.8)
-                .foregroundStyle(Color(nsColor: theme.secondary))
+                .foregroundStyle(Color(platform: theme.secondary))
                 .padding(.bottom, 2)
             ForEach(backlinks) { backlink in
                 BacklinkRow(backlink: backlink, theme: theme) { onOpen(backlink.url) }
@@ -265,19 +269,19 @@ private struct BacklinkRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(backlink.title)
                     .font(.system(size: 13.5, weight: .semibold))
-                    .foregroundStyle(Color(nsColor: theme.text))
+                    .foregroundStyle(Color(platform: theme.text))
                 Text(backlink.snippet)
                     .font(.system(size: 12.5))
-                    .foregroundStyle(Color(nsColor: theme.secondary))
+                    .foregroundStyle(Color(platform: theme.secondary))
                     .lineLimit(2)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(nsColor: theme.codeBackground), in: .rect(cornerRadius: 12))
+            .background(Color(platform: theme.codeBackground), in: .rect(cornerRadius: 12))
             .overlay {
                 RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(Color(nsColor: theme.accent).opacity(isHovering ? 0.45 : 0), lineWidth: 1)
+                    .strokeBorder(Color(platform: theme.accent).opacity(isHovering ? 0.45 : 0), lineWidth: 1)
             }
             .contentShape(.rect)
         }
@@ -292,8 +296,8 @@ private struct ReadingImage: View {
     let baseURL: URL?
 
     var body: some View {
-        if let url, url.isFileURL, let image = NSImage(contentsOf: url) {
-            Image(nsImage: image)
+        if let url, url.isFileURL, let image = PlatformImage.load(contentsOf: url) {
+            Image(platformImage: image)
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: image.size.width)

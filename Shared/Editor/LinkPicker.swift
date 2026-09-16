@@ -16,6 +16,8 @@ struct LinkPicker: View {
     let onCancel: (_ removesBracket: Bool) -> Void
     let onFocusLost: () -> Void
     let onSizeChange: (CGSize) -> Void
+    /// On iPhone and iPad the picker fills a sheet instead of floating as a card with keyboard hints.
+    var fillsWidth = false
 
     /// Transparent space around the card, so its shadow isn't clipped.
     static let shadowRoom: CGFloat = 24
@@ -26,9 +28,9 @@ struct LinkPicker: View {
     @FocusState private var isFieldFocused: Bool
 
     private let matchOptions: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
-    private var accent: Color { Color(nsColor: theme.accent) }
-    private var textColor: Color { Color(nsColor: theme.text) }
-    private var secondary: Color { Color(nsColor: theme.secondary) }
+    private var accent: Color { Color(platform: theme.accent) }
+    private var textColor: Color { Color(platform: theme.text) }
+    private var secondary: Color { Color(platform: theme.secondary) }
 
     /// The typed title, without characters that would break the link.
     private var title: String {
@@ -64,17 +66,20 @@ struct LinkPicker: View {
                 }
                 .padding(6)
             }
-            separator
-            footer
+            if !fillsWidth {
+                separator
+                footer
+            }
         }
-        .frame(width: 340)
-        .background(Color(nsColor: theme.background).mix(with: .white, by: theme.isDark ? 0.05 : 0.6))
+        .frame(width: fillsWidth ? nil : 340)
+        .frame(maxWidth: fillsWidth ? .infinity : nil)
+        .background(Color(platform: theme.background).mix(with: .white, by: theme.isDark ? 0.05 : 0.6))
         .clipShape(.rect(cornerRadius: 14))
         .overlay {
             RoundedRectangle(cornerRadius: 14).strokeBorder(secondary.opacity(0.3), lineWidth: 1)
         }
-        .shadow(color: .black.opacity(theme.isDark ? 0.5 : 0.13), radius: 20, y: 10)
-        .padding(Self.shadowRoom)
+        .shadow(color: .black.opacity(fillsWidth ? 0 : (theme.isDark ? 0.5 : 0.13)), radius: 20, y: 10)
+        .padding(fillsWidth ? 16 : Self.shadowRoom)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { onSizeChange($0) }
         .onChange(of: query) { selection = -1 }
         .onChange(of: isFieldFocused) { wasFocused, isFocused in
@@ -116,7 +121,9 @@ struct LinkPicker: View {
                     onCancel(true)
                     return .handled
                 }
+                #if os(macOS)
                 .onExitCommand { onCancel(false) }
+                #endif
 
             if !title.isEmpty {
                 Text(pageExists ? "Bestaat al" : "Nieuw")

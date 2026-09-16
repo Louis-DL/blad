@@ -1,5 +1,10 @@
-import AppKit
+import SwiftUI
 import UniformTypeIdentifiers
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 /// Turns a page into one standalone HTML file that looks like reading mode.
 enum HTMLExporter {
@@ -162,14 +167,14 @@ enum HTMLExporter {
         }
     }
 
-    private static func css(_ color: NSColor, alpha: CGFloat? = nil) -> String {
-        let color = color.usingColorSpace(.sRGB) ?? color
+    private static func css(_ color: PlatformColor, alpha: CGFloat? = nil) -> String {
+        let rgba = color.srgbComponents
         return String(
             format: "rgba(%d, %d, %d, %.3f)",
-            Int((color.redComponent * 255).rounded()),
-            Int((color.greenComponent * 255).rounded()),
-            Int((color.blueComponent * 255).rounded()),
-            alpha ?? color.alphaComponent
+            Int((rgba.red * 255).rounded()),
+            Int((rgba.green * 255).rounded()),
+            Int((rgba.blue * 255).rounded()),
+            alpha ?? rgba.alpha
         )
     }
 
