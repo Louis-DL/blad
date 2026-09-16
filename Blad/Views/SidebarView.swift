@@ -153,7 +153,7 @@ private struct EmptySidebar: View {
         ContentUnavailableView {
             Label("Nog geen ruimtes", systemImage: "square.stack")
         } description: {
-            Text("Maak een ruimte of open een map met notities.")
+            Text("Maak een ruimte per project of vak, of open een bestaande map.")
         } actions: {
             Button("Nieuwe ruimte") { model.createWorkspace() }
                 .buttonStyle(.glassProminent)

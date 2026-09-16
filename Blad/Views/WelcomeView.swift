@@ -39,7 +39,7 @@ struct WelcomeView: View {
         ActionCard(symbol: "square.and.pencil", title: "Nieuwe pagina", detail: "Begin meteen te schrijven", shortcut: "⌘N", width: cardWidth) {
             model.newPage()
         }
-        ActionCard(symbol: "folder.badge.plus", title: "Nieuwe ruimte", detail: "Een map voor je notities", shortcut: "⇧⌘N", width: cardWidth) {
+        ActionCard(symbol: "plus.square.on.square", title: "Nieuwe ruimte", detail: "Voor een project of vak", shortcut: "⇧⌘N", width: cardWidth) {
             model.createWorkspace()
         }
         ActionCard(symbol: "arrow.up.forward.square", title: "Openen", detail: "Een map of .md-bestand", shortcut: "⌘O", width: cardWidth) {

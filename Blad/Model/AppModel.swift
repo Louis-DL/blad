@@ -179,10 +179,10 @@ final class AppModel {
     func createWorkspace() {
         let panel = NSSavePanel()
         panel.title = "Nieuwe ruimte"
-        panel.message = "Een ruimte is een gewone map. Kies iCloud Drive als je je notities op al je apparaten wilt."
+        panel.message = "Een ruimte houdt de pagina's van één project of vak bij elkaar. Kies iCloud Drive om ze ook op je iPhone te hebben."
         panel.prompt = "Maak aan"
         panel.nameFieldLabel = "Naam:"
-        panel.nameFieldStringValue = "Notities"
+        panel.nameFieldStringValue = "Nieuwe ruimte"
         panel.canCreateDirectories = true
         panel.directoryURL = documentsFolder
         guard panel.runModal() == .OK, let url = panel.url else { return }

@@ -113,7 +113,7 @@ struct DetailView: View {
 
             Menu {
                 Button("Nieuwe pagina", systemImage: "square.and.pencil") { model.newPage() }
-                Button("Nieuwe ruimte…", systemImage: "folder.badge.plus") { model.createWorkspace() }
+                Button("Nieuwe ruimte…", systemImage: "plus.square.on.square") { model.createWorkspace() }
                 Divider()
                 Button("Openen…", systemImage: "folder") { model.showOpenPanel() }
             } label: {

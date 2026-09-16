@@ -5,28 +5,64 @@ struct RootView: View {
     @Environment(\.colorScheme) private var systemScheme
     @AppStorage(Pref.theme) private var themeID: ThemeID = .paper
     @State private var selection: URL?
-    @State private var isChoosingFolder = false
     @State private var showsSettings = false
+    @State private var isNamingSpace = false
+    @State private var spaceName = ""
+    @State private var isPickingFolder = false
+    @State private var folderPurpose = FolderPurpose.existingFolder
+
+    /// What the folder picker is open for.
+    private enum FolderPurpose {
+        /// Where a new space goes; Blad makes a folder with this name there.
+        case newSpace(name: String)
+        /// A folder that already holds pages, like a project with its README's.
+        case existingFolder
+    }
 
     var body: some View {
         let theme = Theme.resolve(themeID, scheme: systemScheme)
 
         NavigationSplitView {
-            PagesList(selection: $selection, isChoosingFolder: $isChoosingFolder, showsSettings: $showsSettings)
+            PagesList(
+                selection: $selection,
+                showsSettings: $showsSettings,
+                onNewSpace: beginNewSpace,
+                onOpenFolder: openExistingFolder
+            )
         } detail: {
             if let selection, let document = library.document(for: selection) {
                 PageScreen(document: document, theme: theme, onOpenPage: { self.selection = $0 })
                     .id(document.id)
             } else {
-                StartView(theme: theme, isChoosingFolder: $isChoosingFolder) {
+                StartView(theme: theme, onNewSpace: beginNewSpace, onOpenFolder: openExistingFolder) {
                     selection = library.newPage()
                 }
             }
         }
         .tint(Color(platform: theme.accent))
         .preferredColorScheme(themeID.colorScheme)
-        .fileImporter(isPresented: $isChoosingFolder, allowedContentTypes: [.folder]) { result in
-            if case .success(let url) = result {
+        .alert("Nieuwe ruimte", isPresented: $isNamingSpace) {
+            TextField("Bv. Wiskunde of Blad-app", text: $spaceName)
+            Button("Kies een plek") {
+                let name = spaceName.trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty else { return }
+                folderPurpose = .newSpace(name: name)
+                Task {
+                    // Let the alert finish closing before the Files picker slides in.
+                    try? await Task.sleep(for: .milliseconds(350))
+                    isPickingFolder = true
+                }
+            }
+            Button("Annuleer", role: .cancel) {}
+        } message: {
+            Text("Een ruimte houdt de pagina's van één project of vak bij elkaar. Kies daarna waar ze komt, bijvoorbeeld in iCloud Drive.")
+        }
+        .fileImporter(isPresented: $isPickingFolder, allowedContentTypes: [.folder]) { result in
+            guard case .success(let url) = result else { return }
+            switch folderPurpose {
+            case .newSpace(let name):
+                library.createSpace(named: name, in: url)
+            case .existingFolder:
                 library.addSpace(url)
             }
         }
@@ -43,6 +79,16 @@ struct RootView: View {
         }
     }
 
+    private func beginNewSpace() {
+        spaceName = ""
+        isNamingSpace = true
+    }
+
+    private func openExistingFolder() {
+        folderPurpose = .existingFolder
+        isPickingFolder = true
+    }
+
     private var hasError: Binding<Bool> {
         Binding(get: { library.errorMessage != nil }, set: { if !$0 { library.errorMessage = nil } })
     }
@@ -51,8 +97,9 @@ struct RootView: View {
 /// Spaces and their pages, or search results while searching.
 private struct PagesList: View {
     @Binding var selection: URL?
-    @Binding var isChoosingFolder: Bool
     @Binding var showsSettings: Bool
+    let onNewSpace: () -> Void
+    let onOpenFolder: () -> Void
 
     @Environment(Library.self) private var library
     @State private var query = ""
@@ -102,9 +149,8 @@ private struct PagesList: View {
                     }
                     .keyboardShortcut("n")
                     .disabled(library.spaces.isEmpty)
-                    Button("Voeg een map toe…", systemImage: "folder.badge.plus") {
-                        isChoosingFolder = true
-                    }
+                    Button("Nieuwe ruimte…", systemImage: "plus.square.on.square", action: onNewSpace)
+                    Button("Open een bestaande map…", systemImage: "folder", action: onOpenFolder)
                 } label: {
                     Label("Nieuw", systemImage: "plus")
                 }
@@ -134,12 +180,14 @@ private struct PagesList: View {
     private var emptyState: some View {
         Section {
             ContentUnavailableView {
-                Label("Nog geen ruimte", systemImage: "folder")
+                Label("Nog geen ruimte", systemImage: "square.stack")
             } description: {
-                Text("Kies een map in Bestanden. Kies iCloud Drive om dezelfde notities op je Mac te hebben.")
+                Text("Maak een ruimte per project of vak. Bewaar ze in iCloud Drive om ze ook op je Mac te hebben.")
             } actions: {
-                Button("Kies een map") { isChoosingFolder = true }
+                Button("Nieuwe ruimte", action: onNewSpace)
                     .buttonStyle(.glassProminent)
+                Button("Open een bestaande map", action: onOpenFolder)
+                    .buttonStyle(.glass)
             }
         }
     }
@@ -223,7 +271,8 @@ private struct PagesList: View {
 /// Shown next to the list on iPad when no page is open.
 private struct StartView: View {
     let theme: Theme
-    @Binding var isChoosingFolder: Bool
+    let onNewSpace: () -> Void
+    let onOpenFolder: () -> Void
     let onNewPage: () -> Void
 
     @Environment(Library.self) private var library
@@ -243,15 +292,19 @@ private struct StartView: View {
 
             if library.spaces.isEmpty {
                 VStack(spacing: 12) {
-                    Button {
-                        isChoosingFolder = true
-                    } label: {
-                        Label("Kies een map", systemImage: "folder")
+                    Button(action: onNewSpace) {
+                        Label("Nieuwe ruimte", systemImage: "plus.square.on.square")
                             .frame(maxWidth: 240)
                     }
                     .buttonStyle(.glassProminent)
                     .controlSize(.large)
-                    Text("Kies iCloud Drive om dezelfde notities op je Mac te hebben.")
+                    Button(action: onOpenFolder) {
+                        Label("Open een bestaande map", systemImage: "folder")
+                            .frame(maxWidth: 240)
+                    }
+                    .buttonStyle(.glass)
+                    .controlSize(.large)
+                    Text("Een ruimte per project of vak. In iCloud Drive heb je ze ook op je Mac.")
                         .font(.footnote)
                         .foregroundStyle(Color(platform: theme.secondary))
                         .multilineTextAlignment(.center)

@@ -33,11 +33,35 @@ final class Library {
 
     // MARK: - Spaces
 
+    /// Opens a folder picked in Files as a space.
     func addSpace(_ url: URL) {
         guard url.startAccessingSecurityScopedResource() else {
             errorMessage = "Blad kreeg geen toegang tot \(url.lastPathComponent)."
             return
         }
+        register(url)
+    }
+
+    /// Makes a folder for a new project or course inside `parent`, picked in Files, and opens it as a space.
+    func createSpace(named name: String, in parent: URL) {
+        let clean = sanitized(name)
+        guard !clean.isEmpty else { return }
+        // Access to the picked folder also covers the new folder inside it; it stays open while Blad runs.
+        guard parent.startAccessingSecurityScopedResource() else {
+            errorMessage = "Blad kreeg geen toegang tot \(parent.lastPathComponent)."
+            return
+        }
+        let url = uniqueURL(in: parent, base: clean, pathExtension: nil)
+        do {
+            try FileManager.default.createDirectory(at: url, withIntermediateDirectories: false)
+        } catch {
+            present(error, "Kon de ruimte \(clean) niet maken")
+            return
+        }
+        register(url)
+    }
+
+    private func register(_ url: URL) {
         let url = url.standardizedFileURL
         guard !spaces.contains(where: { $0.url == url }) else { return }
         spaces.append(Space(url: url))
@@ -274,12 +298,11 @@ final class Library {
         return String(cleaned.prefix(80))
     }
 
-    private func uniqueURL(in folder: URL, base: String, pathExtension: String) -> URL {
+    private func uniqueURL(in folder: URL, base: String, pathExtension: String?) -> URL {
         var number = 1
         while true {
-            let url = folder
-                .appendingPathComponent(number == 1 ? base : "\(base) \(number)")
-                .appendingPathExtension(pathExtension)
+            var url = folder.appendingPathComponent(number == 1 ? base : "\(base) \(number)")
+            if let pathExtension { url.appendPathExtension(pathExtension) }
             if !FileManager.default.fileExists(atPath: url.path) { return url.standardizedFileURL }
             number += 1
         }
