@@ -108,12 +108,16 @@ def jaar(gebeurtenis):
 "# Hoofdstuk 3`n`nNotities." | Set-Content -Encoding utf8 (Join-Path $space "Hoofdstukken\Hoofdstuk 3.md")
 
 $page = Join-Path $space "Franse Revolutie.md"
-New-Item -ItemType Directory -Force $data | Out-Null
-@{
-    Spaces     = @($space)
-    OpenPages  = @($page, (Join-Path $space "Tijdlijn.md"))
-    ActivePage = $page
-} | ConvertTo-Json | Set-Content -Encoding utf8 (Join-Path $data "settings.json")
+function Set-Settings([hashtable]$extra = @{}) {
+    New-Item -ItemType Directory -Force $data | Out-Null
+    $settings = @{
+        Spaces     = @($space)
+        OpenPages  = @($page, (Join-Path $space "Tijdlijn.md"))
+        ActivePage = $page
+    } + $extra
+    $settings | ConvertTo-Json | Set-Content -Encoding utf8 (Join-Path $data "settings.json")
+}
+Set-Settings
 
 $blad = Start-Blad
 Save-Screen "2-bewerken"
@@ -129,6 +133,21 @@ Start-Sleep -Seconds 2
 [System.Windows.Forms.SendKeys]::SendWait("tijd")
 Start-Sleep -Seconds 1
 Save-Screen "4-zoeken"
+
+# 5. Back to editing, at the end of the page (code block and table).
+[System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+Start-Sleep -Seconds 1
+[System.Windows.Forms.SendKeys]::SendWait("^r")
+Start-Sleep -Seconds 1
+[System.Windows.Forms.SendKeys]::SendWait("^{END}")
+Start-Sleep -Seconds 2
+Save-Screen "5-einde"
+Stop-Blad $blad
+
+# 6. Night theme with Georgia.
+Set-Settings @{ Theme = "night"; Font = "georgia" }
+$blad = Start-Blad
+Save-Screen "6-nacht"
 Stop-Blad $blad
 
 Show-Crash

@@ -76,7 +76,20 @@
                 </DropDownButton>
             </Grid>
 
-            <TreeView x:Name="PagesTree" Grid.Row="1" SelectionMode="Single" />
+            <TreeView x:Name="PagesTree" Grid.Row="1" SelectionMode="Single">
+                <TreeView.ItemTemplate>
+                    <DataTemplate x:DataType="TreeViewNode">
+                        <TreeViewItem ContextFlyout="{x:Bind ((local:SidebarRow)Content).Menu}">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <FontIcon Glyph="{x:Bind ((local:SidebarRow)Content).Glyph}" FontSize="14"
+                                          Opacity="{x:Bind ((local:SidebarRow)Content).IconOpacity}" />
+                                <TextBlock Text="{x:Bind ((local:SidebarRow)Content).Name}" TextTrimming="CharacterEllipsis"
+                                           FontWeight="{x:Bind ((local:SidebarRow)Content).Weight}" />
+                            </StackPanel>
+                        </TreeViewItem>
+                    </DataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
 
             <StackPanel x:Name="EmptySidebar" Grid.Row="1" Spacing="10" Margin="8,24,8,0" Visibility="Collapsed">
                 <TextBlock Text="Nog geen ruimte" FontSize="16" FontWeight="SemiBold" />

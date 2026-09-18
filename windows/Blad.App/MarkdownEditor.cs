@@ -101,6 +101,9 @@ public sealed partial class MarkdownEditor : UserControl
     {
         theme = pageTheme;
         box.SelectionHighlightColor = new SolidColorBrush(Theme.WithAlpha(pageTheme.Accent, 0.35));
+        // The text box can miss fonts by name that the rest of the window finds (Sitka on Windows 11);
+        // it then falls back to its own font, so that has to be the page font too.
+        box.FontFamily = new FontFamily(Family);
         UpdateLayout(restyleIfNeeded: false);
         Restyle(full: true);
     }
@@ -421,7 +424,8 @@ public sealed partial class MarkdownEditor : UserControl
         var newGutter = FontSize * (ActualWidth > 0 && ActualWidth < 640 ? 1.2 : 3.2);
         var column = AppSettings.Current.LineWidth + newGutter * 2;
         var side = Math.Max(12, (ActualWidth - column) / 2);
-        box.Padding = new Thickness(side, 36, side, 160);
+        // Padding shrinks what's visible rather than adding room to scroll, so keep the bottom small.
+        box.Padding = new Thickness(side, 36, side, 12);
         if (Math.Abs(newGutter - gutter) > 0.5)
         {
             gutter = newGutter;

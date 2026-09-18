@@ -9,6 +9,24 @@ namespace Blad;
 /// <summary>One row in the sidebar: a space, a folder or a page.</summary>
 internal sealed record SidebarEntry(string Path, bool IsFolder, bool IsSpace);
 
+/// <summary>What a sidebar row shows. The tree's template in MainWindow.xaml draws it.</summary>
+public sealed class SidebarRow
+{
+    internal SidebarRow(SidebarEntry entry, string name, MenuFlyout menu)
+    {
+        Entry = entry;
+        Name = name;
+        Menu = menu;
+    }
+
+    internal SidebarEntry Entry { get; }
+    public string Name { get; }
+    public MenuFlyout Menu { get; }
+    public string Glyph => Entry.IsSpace ? "\uE8F1" : Entry.IsFolder ? "\uE8B7" : "\uE8A5";
+    public double IconOpacity => Entry.IsSpace ? 1 : 0.75;
+    public Windows.UI.Text.FontWeight Weight => Entry.IsSpace ? FontWeights.SemiBold : FontWeights.Normal;
+}
+
 public sealed partial class MainWindow
 {
     private readonly HashSet<string> expandedFolders = new(StringComparer.OrdinalIgnoreCase);
@@ -18,7 +36,7 @@ public sealed partial class MainWindow
     {
         PagesTree.ItemInvoked += (_, args) =>
         {
-            if (args.InvokedItem is not TreeViewNode { Content: FrameworkElement { Tag: SidebarEntry entry } } node) return;
+            if (args.InvokedItem is not TreeViewNode { Content: SidebarRow { Entry: var entry } } node) return;
             if (entry.IsFolder) node.IsExpanded = !node.IsExpanded;
             else Show(entry.Path);
         };
@@ -28,7 +46,7 @@ public sealed partial class MainWindow
 
     private void Remember(TreeViewNode node, bool expanded)
     {
-        if (node.Content is not FrameworkElement { Tag: SidebarEntry entry }) return;
+        if (node.Content is not SidebarRow { Entry: var entry }) return;
         if (entry.IsSpace)
         {
             if (expanded) collapsedSpaces.Remove(entry.Path);
@@ -76,27 +94,7 @@ public sealed partial class MainWindow
         }
     }
 
-    private FrameworkElement Row(SidebarEntry entry, string name)
-    {
-        var glyph = entry.IsSpace ? "\uE8F1" : entry.IsFolder ? "\uE8B7" : "\uE8A5";
-        return new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 10,
-            Tag = entry,
-            ContextFlyout = Menu(entry),
-            Children =
-            {
-                new FontIcon { Glyph = glyph, FontSize = 14, Opacity = entry.IsSpace ? 1 : 0.75 },
-                new TextBlock
-                {
-                    Text = name,
-                    FontWeight = entry.IsSpace ? FontWeights.SemiBold : FontWeights.Normal,
-                    TextTrimming = TextTrimming.CharacterEllipsis,
-                },
-            },
-        };
-    }
+    private SidebarRow Row(SidebarEntry entry, string name) => new(entry, name, Menu(entry));
 
     private MenuFlyout Menu(SidebarEntry entry)
     {
@@ -128,7 +126,7 @@ public sealed partial class MainWindow
         {
             foreach (var node in nodes)
             {
-                if (node.Content is FrameworkElement { Tag: SidebarEntry entry } && Library.SamePath(entry.Path, path)) return node;
+                if (node.Content is SidebarRow { Entry: var entry } && Library.SamePath(entry.Path, path)) return node;
                 if (Find(node.Children) is { } found) return found;
             }
             return null;
