@@ -23,6 +23,7 @@ public sealed partial class MainWindow : Window
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(DragRegion);
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1280, 860));
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "Blad.ico"));
         Root.Loaded += (_, _) =>
         {
             // Room for the minimise, maximise and close buttons, which Windows draws over the content.
@@ -155,7 +156,7 @@ public sealed partial class MainWindow : Window
         if (active is not { } page) return;
         Editor.Visibility = page.IsReading ? Visibility.Collapsed : Visibility.Visible;
         Reading.Visibility = page.IsReading ? Visibility.Visible : Visibility.Collapsed;
-        ModeIcon.Glyph = page.IsReading ? "" : "";
+        ModeIcon.Glyph = page.IsReading ? "\uE70F" : "\uE736";
         ModeLabel.Text = page.IsReading ? "Bewerk" : "Lezen";
 
         if (!page.IsReading)
@@ -190,7 +191,7 @@ public sealed partial class MainWindow : Window
         {
             Header = document.Title,
             Tag = document.Path,
-            IconSource = new FontIconSource { Glyph = "" },
+            IconSource = new FontIconSource { Glyph = "\uE8A5" },
         };
         var index = Tabs.SelectedIndex >= 0 ? Tabs.SelectedIndex + 1 : Tabs.TabItems.Count;
         Tabs.TabItems.Insert(Math.Min(index, Tabs.TabItems.Count), tab);
@@ -280,10 +281,10 @@ public sealed partial class MainWindow : Window
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Center };
         if (library.Spaces.Count > 0)
         {
-            actions.Children.Add(ActionButton("Nieuwe pagina", "", () => NewPage(null), accent: true));
+            actions.Children.Add(ActionButton("Nieuwe pagina", "\uE8A5", () => NewPage(null), accent: true));
         }
-        actions.Children.Add(ActionButton("Nieuwe ruimte", "", () => _ = NewSpaceAsync(), accent: library.Spaces.Count == 0));
-        actions.Children.Add(ActionButton("Open een bestaande map", "", () => _ = OpenFolderAsync(), accent: false));
+        actions.Children.Add(ActionButton("Nieuwe ruimte", "\uE8F1", () => _ = NewSpaceAsync(), accent: library.Spaces.Count == 0));
+        actions.Children.Add(ActionButton("Open een bestaande map", "\uE8DA", () => _ = OpenFolderAsync(), accent: false));
         WelcomeContent.Children.Add(actions);
 
         var recent = settings.RecentPages.Where(File.Exists).Take(5).ToList();
@@ -312,7 +313,7 @@ public sealed partial class MainWindow : Window
                     Spacing = 10,
                     Children =
                     {
-                        new FontIcon { Glyph = "", FontSize = 14, Foreground = Theme.Brush(theme.Secondary) },
+                        new FontIcon { Glyph = "\uE8A5", FontSize = 14, Foreground = Theme.Brush(theme.Secondary) },
                         new TextBlock { Text = Path.GetFileNameWithoutExtension(path), Foreground = Theme.Brush(theme.Text) },
                         new TextBlock { Text = Path.GetFileName(Path.GetDirectoryName(path)), Foreground = Theme.Brush(theme.Secondary) },
                     },

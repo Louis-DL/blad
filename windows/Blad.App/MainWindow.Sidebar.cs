@@ -78,7 +78,7 @@ public sealed partial class MainWindow
 
     private FrameworkElement Row(SidebarEntry entry, string name)
     {
-        var glyph = entry.IsSpace ? "" : entry.IsFolder ? "" : "";
+        var glyph = entry.IsSpace ? "\uE8F1" : entry.IsFolder ? "\uE8B7" : "\uE8A5";
         return new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -110,15 +110,15 @@ public sealed partial class MainWindow
 
         if (entry.IsFolder)
         {
-            Add("Nieuwe pagina", "", () => NewPage(entry.Path));
-            Add("Nieuwe map", "", () => library.NewFolder(entry.Path));
+            Add("Nieuwe pagina", "\uE8A5", () => NewPage(entry.Path));
+            Add("Nieuwe map", "\uE8F4", () => library.NewFolder(entry.Path));
             menu.Items.Add(new MenuFlyoutSeparator());
         }
-        if (!entry.IsSpace) Add("Wijzig naam…", "", () => _ = RenameAsync(entry.Path));
-        Add("Toon in Verkenner", "", () => ShowInExplorer(entry.Path));
+        if (!entry.IsSpace) Add("Wijzig naam…", "\uE8AC", () => _ = RenameAsync(entry.Path));
+        Add("Toon in Verkenner", "\uEC50", () => ShowInExplorer(entry.Path));
         menu.Items.Add(new MenuFlyoutSeparator());
-        if (entry.IsSpace) Add("Verwijder uit Blad", "", () => library.RemoveSpace(entry.Path));
-        else Add("Verplaats naar de Prullenbak", "", () => _ = DeleteAsync(entry.Path));
+        if (entry.IsSpace) Add("Verwijder uit Blad", "\uE738", () => library.RemoveSpace(entry.Path));
+        else Add("Verplaats naar de Prullenbak", "\uE74D", () => _ = DeleteAsync(entry.Path));
         return menu;
     }
 

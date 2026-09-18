@@ -182,7 +182,7 @@ public sealed class ReadingView : UserControl
             Content = new FontIcon
             {
                 // Segoe Fluent Icons: a filled circle with a tick, or an empty circle.
-                Glyph = item.Done ? "" : "",
+                Glyph = item.Done ? "\uEC61" : "\uEA3A",
                 FontSize = Size,
                 Foreground = Theme.Brush(item.Done ? theme.Accent : theme.Secondary),
             },
