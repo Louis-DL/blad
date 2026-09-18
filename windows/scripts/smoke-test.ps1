@@ -144,10 +144,25 @@ Start-Sleep -Seconds 2
 Save-Screen "5-einde"
 Stop-Blad $blad
 
-# 6. Night theme with Georgia.
+# 6. Night theme with Georgia, with the caret in the text (a few shots, it blinks).
 Set-Settings @{ Theme = "night"; Font = "georgia" }
 $blad = Start-Blad
 Save-Screen "6-nacht"
+[System.Windows.Forms.SendKeys]::SendWait("^r")
+Start-Sleep -Seconds 1
+[System.Windows.Forms.SendKeys]::SendWait("^r")
+Start-Sleep -Seconds 1
+[System.Windows.Forms.SendKeys]::SendWait("^{HOME}{DOWN}{DOWN}{END}")
+foreach ($i in 1..4) { Start-Sleep -Milliseconds 260; Save-Screen "7-cursor-$i" }
+Stop-Blad $blad
+
+# 8. Which Sitka names the machine knows, and whether the editor takes plain "Sitka".
+Get-ChildItem "$env:WINDIR\Fonts" -Filter "Sitka*" | ForEach-Object { Write-Host "Font file: $($_.Name)" }
+(New-Object System.Drawing.Text.InstalledFontCollection).Families |
+    Where-Object { $_.Name -like "Sitka*" } | ForEach-Object { Write-Host "GDI family: $($_.Name)" }
+Set-Settings @{ Font = "Sitka" }
+$blad = Start-Blad
+Save-Screen "8-sitka"
 Stop-Blad $blad
 
 Show-Crash

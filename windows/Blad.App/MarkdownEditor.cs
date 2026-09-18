@@ -104,6 +104,9 @@ public sealed partial class MarkdownEditor : UserControl
         // The text box can miss fonts by name that the rest of the window finds (Sitka on Windows 11);
         // it then falls back to its own font, so that has to be the page font too.
         box.FontFamily = new FontFamily(Family);
+        // In a dark theme the text box paints every character in its own foreground colour, which
+        // would erase the quiet syntax and coloured links. Blad sets all colours itself, so keep it light.
+        box.RequestedTheme = ElementTheme.Light;
         UpdateLayout(restyleIfNeeded: false);
         Restyle(full: true);
     }
