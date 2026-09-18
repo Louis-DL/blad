@@ -81,22 +81,26 @@ public sealed record Theme(
 }
 
 /// <summary>
-/// Fonts for writing. New York doesn't exist on Windows; Sitka is Windows' own font for long reading.
+/// Fonts for writing. New York doesn't exist on Windows, and Windows 11's Sitka is a variable font that the
+/// editor's text box doesn't take reliably, so these are fonts that come with Windows as plain font files.
 /// </summary>
 public static class EditorFonts
 {
-    public const string DefaultId = "sitka";
+    public const string DefaultId = "georgia";
+
+    /// <summary>Cascadia Mono comes with Windows 11; Windows 10 has Consolas.</summary>
+    public static string CodeFamily { get; } = HasFont("CascadiaMono") ? "Cascadia Mono" : "Consolas";
 
     public static IReadOnlyList<(string Id, string Name, string Family)> Presets { get; } =
     [
-        ("sitka", "Sitka", "Sitka Text"),
         ("georgia", "Georgia", "Georgia"),
-        ("segoe", "Segoe UI", "Segoe UI Variable Text"),
-        ("cascadia", "Cascadia Mono", "Cascadia Mono"),
+        ("cambria", "Cambria", "Cambria"),
+        ("segoe", "Segoe UI", "Segoe UI"),
+        ("cascadia", "Monospace", CodeFamily),
     ];
 
     public static string Family(string id) =>
-        Presets.FirstOrDefault(preset => preset.Id == id).Family ?? id;
+        Presets.FirstOrDefault(preset => preset.Id == id).Family ?? "Georgia";
 
     public static FontFamily FontFamily(string id) => new(Family(id));
 
@@ -104,10 +108,19 @@ public static class EditorFonts
     {
         "segoe" => "'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif",
         "cascadia" => "'Cascadia Mono', Consolas, monospace",
-        "georgia" => "Georgia, Cambria, serif",
-        "sitka" => "'Sitka Text', Georgia, serif",
-        _ => $"'{id.Replace("'", "")}', 'Segoe UI', sans-serif",
+        "cambria" => "Cambria, Georgia, serif",
+        _ => "Georgia, Cambria, serif",
     };
 
-    public const string CodeFamily = "Cascadia Mono";
+    private static bool HasFont(string filePrefix)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), filePrefix + "*").Any();
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
 }

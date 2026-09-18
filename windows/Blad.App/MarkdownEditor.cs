@@ -101,8 +101,7 @@ public sealed partial class MarkdownEditor : UserControl
     {
         theme = pageTheme;
         box.SelectionHighlightColor = new SolidColorBrush(Theme.WithAlpha(pageTheme.Accent, 0.35));
-        // The text box can miss fonts by name that the rest of the window finds (Sitka on Windows 11);
-        // it then falls back to its own font, so that has to be the page font too.
+        // When the text box can't find a font by name it falls back to its own, so make that the page font too.
         box.FontFamily = new FontFamily(Family);
         // In a dark theme the text box paints every character in its own foreground colour, which
         // would erase the quiet syntax and coloured links. Blad sets all colours itself, so keep it light.
@@ -111,7 +110,7 @@ public sealed partial class MarkdownEditor : UserControl
         Restyle(full: true);
     }
 
-    public new void Focus() => box.Focus(FocusState.Programmatic);
+    public void Focus() => box.Focus(FocusState.Programmatic);
 
     /// <summary>Finishes a link after [[: the page name, then ]] unless it's already there.</summary>
     public void CompleteLink(string title)
@@ -418,13 +417,13 @@ public sealed partial class MarkdownEditor : UserControl
 
     // MARK: Styling
 
-    private double FontSize => AppSettings.Current.FontSize;
+    private double TextSize => AppSettings.Current.FontSize;
     private string Family => EditorFonts.Family(AppSettings.Current.Font);
 
     /// <summary>Centres the text column; the margin for hanging markers is narrower in a small window.</summary>
     private void UpdateLayout(bool restyleIfNeeded)
     {
-        var newGutter = FontSize * (ActualWidth > 0 && ActualWidth < 640 ? 1.2 : 3.2);
+        var newGutter = TextSize * (ActualWidth > 0 && ActualWidth < 640 ? 1.2 : 3.2);
         var column = AppSettings.Current.LineWidth + newGutter * 2;
         var side = Math.Max(12, (ActualWidth - column) / 2);
         // Padding shrinks what's visible rather than adding room to scroll, so keep the bottom small.
@@ -455,7 +454,7 @@ public sealed partial class MarkdownEditor : UserControl
             to = last.Start + last.Length;
         }
 
-        var points = FontSize * 0.75;
+        var points = TextSize * 0.75;
         var gutterPoints = (float)(gutter * 0.75);
         isApplying = true;
         box.Document.BatchDisplayUpdates();
@@ -499,7 +498,7 @@ public sealed partial class MarkdownEditor : UserControl
         {
             case LineKind.Heading:
             {
-                var size = FontSize * HeadingScale[line.HeadingLevel - 1];
+                var size = TextSize * HeadingScale[line.HeadingLevel - 1];
                 range.CharacterFormat.Size = (float)(size * 0.75);
                 range.CharacterFormat.Bold = FormatEffect.On;
                 var marker = (float)(Measure(lastText.Substring(line.Start, line.MarkerLength), size, bold: true) * 0.75);
@@ -511,13 +510,13 @@ public sealed partial class MarkdownEditor : UserControl
             {
                 range.CharacterFormat.Italic = FormatEffect.On;
                 range.CharacterFormat.ForegroundColor = Theme.WithAlpha(theme.Text, 0.75);
-                var marker = (float)(Measure(lastText.Substring(line.Start, line.MarkerLength), FontSize, bold: false) * 0.75);
+                var marker = (float)(Measure(lastText.Substring(line.Start, line.MarkerLength), TextSize, bold: false) * 0.75);
                 range.ParagraphFormat.SetIndents(-Math.Min(marker, gutterPoints), gutterPoints, gutterPoints);
                 break;
             }
             case LineKind.ListItem:
             {
-                var prefix = (float)(Measure(lastText.Substring(line.Start, line.MarkerLength), FontSize, bold: false) * 0.75);
+                var prefix = (float)(Measure(lastText.Substring(line.Start, line.MarkerLength), TextSize, bold: false) * 0.75);
                 range.ParagraphFormat.SetIndents(-prefix, gutterPoints + prefix, gutterPoints);
                 break;
             }

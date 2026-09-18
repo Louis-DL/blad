@@ -1,6 +1,6 @@
-# Starts the published Blad on the build machine and photographs it: once on the welcome
-# screen, once with a space open in the editor and once in reading mode. Fails when Blad
-# doesn't stay open, and prints why.
+# Starts the published Blad on the build machine and photographs it: the welcome screen, a space
+# open in the editor and in reading mode, search, the Night theme and another font. Fails when
+# Blad doesn't stay open, and prints why.
 param([string]$App = "publish/Blad/Blad.exe", [string]$Out = "screenshots")
 
 $ErrorActionPreference = "Stop"
@@ -153,16 +153,14 @@ Start-Sleep -Seconds 1
 [System.Windows.Forms.SendKeys]::SendWait("^r")
 Start-Sleep -Seconds 1
 [System.Windows.Forms.SendKeys]::SendWait("^{HOME}{DOWN}{DOWN}{END}")
-foreach ($i in 1..4) { Start-Sleep -Milliseconds 260; Save-Screen "7-cursor-$i" }
+foreach ($i in 1..2) { Start-Sleep -Milliseconds 400; Save-Screen "7-cursor-$i" }
 Stop-Blad $blad
 
-# 8. Which Sitka names the machine knows, and whether the editor takes plain "Sitka".
-Get-ChildItem "$env:WINDIR\Fonts" -Filter "Sitka*" | ForEach-Object { Write-Host "Font file: $($_.Name)" }
-(New-Object System.Drawing.Text.InstalledFontCollection).Families |
-    Where-Object { $_.Name -like "Sitka*" } | ForEach-Object { Write-Host "GDI family: $($_.Name)" }
-Set-Settings @{ Font = "Sitka" }
+# 8. Cambria, to see the editor takes it.
+Get-ChildItem "$env:WINDIR\Fonts" -Filter "Cascadia*" | ForEach-Object { Write-Host "Font file: $($_.Name)" }
+Set-Settings @{ Font = "cambria" }
 $blad = Start-Blad
-Save-Screen "8-sitka"
+Save-Screen "8-cambria"
 Stop-Blad $blad
 
 Show-Crash
