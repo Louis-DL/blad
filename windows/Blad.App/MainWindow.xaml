@@ -1,0 +1,13 @@
+<Window
+    x:Class="Blad.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Blad">
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+    <Grid>
+        <TextBlock x:Name="Greeting" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   FontFamily="Georgia" FontSize="48" FontWeight="SemiBold" />
+    </Grid>
+</Window>

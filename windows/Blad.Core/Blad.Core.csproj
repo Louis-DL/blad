@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Everything Blad does that isn't Windows UI: markdown, pages, search, links, export.
+       Plain .NET, so it builds and is tested anywhere, not just on Windows. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Blad.Core</RootNamespace>
+  </PropertyGroup>
+
+</Project>

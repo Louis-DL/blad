@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Blad.Core/Blad.Core.csproj" />
+  <Project Path="Blad.Core.Tests/Blad.Core.Tests.csproj" />
+  <Project Path="Blad.App/Blad.App.csproj" />
+</Solution>
