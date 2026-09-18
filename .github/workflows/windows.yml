@@ -35,3 +35,11 @@ jobs:
         with:
           name: Blad-windows-x64
           path: Blad-windows-x64.zip
+      - name: Smoke test
+        shell: pwsh
+        run: windows/scripts/smoke-test.ps1
+      - uses: actions/upload-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: Blad-windows-screenshots
+          path: screenshots
