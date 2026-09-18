@@ -31,11 +31,12 @@ public sealed class AppSettings
     private static string FilePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Blad", "settings.json");
 
-    public void Save()
+    /// <param name="notify">False for bookkeeping like open tabs, which doesn't change how anything looks.</param>
+    public void Save(bool notify = true)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
         File.WriteAllText(FilePath, JsonSerializer.Serialize(this, Options));
-        Changed?.Invoke();
+        if (notify) Changed?.Invoke();
     }
 
     private static AppSettings Load()

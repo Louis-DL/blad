@@ -2,12 +2,150 @@
     x:Class="Blad.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Blad"
     Title="Blad">
+
     <Window.SystemBackdrop>
         <MicaBackdrop />
     </Window.SystemBackdrop>
-    <Grid>
-        <TextBlock x:Name="Greeting" HorizontalAlignment="Center" VerticalAlignment="Center"
-                   FontFamily="Georgia" FontSize="48" FontWeight="SemiBold" />
+
+    <Grid x:Name="Root">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="SidebarColumn" Width="264" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="TitleRow" Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Title bar: the name above the sidebar, the open pages as tabs above the page. -->
+        <TextBlock x:Name="AppName" Text="Blad" Margin="18,0,0,0" VerticalAlignment="Center"
+                   FontFamily="Sitka Heading, Georgia" FontSize="19" FontWeight="SemiBold" />
+
+        <Grid x:Name="TitleArea" Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="CaptionColumn" Width="140" />
+            </Grid.ColumnDefinitions>
+            <TabView x:Name="Tabs" VerticalAlignment="Bottom" TabWidthMode="SizeToContent"
+                     IsAddTabButtonVisible="True" CanReorderTabs="True" CanDragTabs="False" />
+            <TextBlock x:Name="PageTitle" Margin="12,0,0,0" VerticalAlignment="Center" FontSize="13"
+                       Visibility="Collapsed" />
+            <Border x:Name="DragRegion" Grid.Column="1" Background="Transparent" />
+        </Grid>
+
+        <!-- Sidebar: search, new, and the spaces with their pages. -->
+        <Grid x:Name="Sidebar" Grid.Row="1" Padding="10,0,6,10" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid ColumnSpacing="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="SearchButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                        ToolTipService.ToolTip="Zoek en open (Ctrl+K)">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <FontIcon Glyph="&#xE721;" FontSize="14" />
+                        <TextBlock Text="Zoeken" />
+                        <TextBlock Text="Ctrl+K" Opacity="0.5" />
+                    </StackPanel>
+                </Button>
+                <DropDownButton x:Name="NewButton" Grid.Column="1" ToolTipService.ToolTip="Nieuw">
+                    <FontIcon Glyph="&#xE710;" FontSize="14" />
+                    <DropDownButton.Flyout>
+                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                            <MenuFlyoutItem x:Name="NewPageItem" Text="Nieuwe pagina">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8A5;" /></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem x:Name="NewSpaceItem" Text="Nieuwe ruimte…">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8F1;" /></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem x:Name="OpenFolderItem" Text="Open een bestaande map…">
+                                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8DA;" /></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </DropDownButton.Flyout>
+                </DropDownButton>
+            </Grid>
+
+            <TreeView x:Name="PagesTree" Grid.Row="1" SelectionMode="Single" />
+
+            <StackPanel x:Name="EmptySidebar" Grid.Row="1" Spacing="10" Margin="8,24,8,0" Visibility="Collapsed">
+                <TextBlock Text="Nog geen ruimte" FontSize="16" FontWeight="SemiBold" />
+                <TextBlock Text="Maak een ruimte per project of vak, of open een bestaande map." TextWrapping="Wrap" Opacity="0.7" />
+            </StackPanel>
+
+            <Button x:Name="SettingsButton" Grid.Row="2" Background="Transparent" BorderThickness="0"
+                    ToolTipService.ToolTip="Instellingen (Ctrl+,)">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <FontIcon Glyph="&#xE713;" FontSize="14" />
+                    <TextBlock Text="Instellingen" />
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- The page: paper, the editor or reading mode, and quiet controls in the corners. -->
+        <Border x:Name="PageArea" Grid.Row="1" Grid.Column="1" CornerRadius="8,0,0,0" BorderThickness="1,1,0,0"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+            <Grid>
+                <Rectangle x:Name="PaperColor" />
+                <Image x:Name="PaperGrain" Stretch="UniformToFill" IsHitTestVisible="False" />
+
+                <local:MarkdownEditor x:Name="Editor" Visibility="Collapsed" />
+                <local:ReadingView x:Name="Reading" Visibility="Collapsed" />
+                <ScrollViewer x:Name="Welcome">
+                    <StackPanel x:Name="WelcomeContent" MaxWidth="560" Margin="40" Spacing="28" VerticalAlignment="Center" />
+                </ScrollViewer>
+
+                <StackPanel x:Name="PageActions" Orientation="Horizontal" Spacing="4" Margin="0,10,14,0"
+                            HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <Button x:Name="ModeButton" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Lezen of bewerken (Ctrl+R)">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon x:Name="ModeIcon" Glyph="&#xE736;" FontSize="14" />
+                            <TextBlock x:Name="ModeLabel" Text="Lezen" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="FocusButton" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Focusmodus (Ctrl+Shift+F)">
+                        <FontIcon Glyph="&#xE740;" FontSize="14" />
+                    </Button>
+                    <Button x:Name="MoreButton" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Meer">
+                        <FontIcon Glyph="&#xE712;" FontSize="14" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuFlyoutItem x:Name="ExportPdfItem" Text="Exporteer als PDF…">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xEA90;" /></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Name="ExportHtmlItem" Text="Exporteer als HTML…">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE943;" /></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem x:Name="InsertImageItem" Text="Voeg afbeelding in…">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xEB9F;" /></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Name="ShowInExplorerItem" Text="Toon in Verkenner">
+                                    <MenuFlyoutItem.Icon><FontIcon Glyph="&#xEC50;" /></MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
+
+                <Border x:Name="StatusPill" Margin="18" Padding="12,5" CornerRadius="14"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <TextBlock x:Name="WordCount" FontSize="12" />
+                </Border>
+
+                <Button x:Name="LeaveFocusButton" Content="Klaar" Visibility="Collapsed" Margin="16"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" />
+            </Grid>
+        </Border>
     </Grid>
 </Window>
