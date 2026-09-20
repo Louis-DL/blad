@@ -13,15 +13,21 @@ public sealed record ExportStyle(
     string Secondary,
     string Accent,
     string CodeBackground,
+    /// <summary>Keyword, string, number and comment colours inside a code block.</summary>
+    CodeColours Code,
     bool IsDark,
     string FontFamily,
     double FontSize)
 {
     /// <summary>Blad's paper theme; the PDF always uses it.</summary>
     public static ExportStyle Paper { get; } = new(
-        "#F4EFE5", "#2F2A23", "#A69D8E", "#B4532A", "rgba(107, 90, 62, 0.075)", false,
+        "#F4EFE5", "#2F2A23", "#A69D8E", "#B4532A", "rgba(107, 90, 62, 0.075)",
+        new CodeColours("#A24A22", "#5E7444", "#3F6E72", "#A69D8E"), false,
         "Georgia, Cambria, 'Times New Roman', serif", 17);
 }
+
+/// <summary>The colours a code block uses, as CSS.</summary>
+public sealed record CodeColours(string Keyword, string String, string Number, string Comment);
 
 /// <summary>Turns a page into one standalone HTML file that looks like reading mode.</summary>
 public static class HtmlExporter
@@ -81,7 +87,7 @@ public static class HtmlExporter
         MarkdownBlock.Quote quote => $"<blockquote>{Inline(quote.Text)}</blockquote>",
         MarkdownBlock.CodeBlock code => "<pre>"
             + (code.Language.Length > 0 ? $"<span class=\"language\">{Escape(code.Language.ToLowerInvariant())}</span>" : "")
-            + $"<code>{Escape(code.Code)}</code></pre>",
+            + $"<code>{Highlighted(code.Code, code.Language)}</code></pre>",
         MarkdownBlock.Table table => Table(table),
         MarkdownBlock.Image image => $"<p><img src=\"{ImageSource(image.Source, pagePath)}\" alt=\"{Escape(image.Alt)}\"></p>",
         MarkdownBlock.Rule => "<hr>",
@@ -97,6 +103,27 @@ public static class HtmlExporter
             _ => ("•", "item"),
         };
         return $"<div class=\"{classes}\" style=\"--depth: {item.Depth}\"><span class=\"marker\">{marker}</span><span class=\"text\">{Inline(item.Text)}</span></div>";
+    }
+
+    /// <summary>The same code colours as reading mode, as spans the stylesheet paints.</summary>
+    private static string Highlighted(string code, string language)
+    {
+        var html = new System.Text.StringBuilder();
+        var last = 0;
+        foreach (var span in CodeHighlighter.Tokens(code, language))
+        {
+            html.Append(Escape(code[last..span.Start]));
+            var name = span.Token switch
+            {
+                CodeToken.Keyword => "kw",
+                CodeToken.String => "str",
+                CodeToken.Number => "num",
+                _ => "com",
+            };
+            html.Append($"<span class=\"{name}\">{Escape(code.Substring(span.Start, span.Length))}</span>");
+            last = span.Start + span.Length;
+        }
+        return html.Append(Escape(code[last..])).ToString();
     }
 
     private static string Table(MarkdownBlock.Table table)
@@ -142,6 +169,10 @@ public static class HtmlExporter
         code { font-size: 0.88em; background: {{s.CodeBackground}}; padding: 0.1em 0.35em; border-radius: 4px; }
         pre { position: relative; background: {{s.CodeBackground}}; padding: 16px 18px; border-radius: 12px; overflow-x: auto; font-size: 0.84em; line-height: 1.5; }
         pre code { background: none; padding: 0; font-size: 1em; }
+        pre .kw { color: {{s.Code.Keyword}}; }
+        pre .str { color: {{s.Code.String}}; }
+        pre .num { color: {{s.Code.Number}}; }
+        pre .com { color: {{s.Code.Comment}}; }
         pre .language { position: absolute; top: 8px; right: 12px; font: 500 10.5px "Segoe UI Variable", system-ui, sans-serif; color: {{s.Secondary}}; }
         blockquote { padding-left: 14px; border-left: 3px solid {{s.Accent}}; font-style: italic; opacity: 0.8; }
         hr { border: 0; height: 1px; background: {{s.Secondary}}; opacity: 0.35; }

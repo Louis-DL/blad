@@ -60,7 +60,7 @@ enum HTMLExporter {
             return "<blockquote>\(inline(text, baseURL: baseURL))</blockquote>"
         case .code(let language, let code):
             let label = language.isEmpty ? "" : "<span class=\"language\">\(escape(language.lowercased()))</span>"
-            return "<pre>\(label)<code>\(escape(code))</code></pre>"
+            return "<pre>\(label)<code>\(highlighted(code, language: language))</code></pre>"
         case .table(let header, let rows):
             let head = header.map { "<th>\(inline($0, baseURL: baseURL))</th>" }.joined()
             let body = rows.map { row in
@@ -112,6 +112,28 @@ enum HTMLExporter {
         return escape(source)
     }
 
+    /// The same code colours as reading mode, as spans the stylesheet paints.
+    private static func highlighted(_ code: String, language: String) -> String {
+        let source = code as NSString
+        var result = ""
+        var last = 0
+        for (range, token) in CodeHighlighter.tokens(in: code, language: language) {
+            result += escape(source.substring(with: NSRange(location: last, length: range.location - last)))
+            result += "<span class=\"\(name(of: token))\">\(escape(source.substring(with: range)))</span>"
+            last = NSMaxRange(range)
+        }
+        return result + escape(source.substring(from: last))
+    }
+
+    private static func name(of token: CodeToken) -> String {
+        switch token {
+        case .keyword: "kw"
+        case .string: "str"
+        case .number: "num"
+        case .comment: "com"
+        }
+    }
+
     // MARK: - Styling
 
     private static func stylesheet(theme: Theme, fontID: String, fontSize: CGFloat) -> String {
@@ -141,6 +163,10 @@ enum HTMLExporter {
         code { font-size: 0.88em; background: \(code); padding: 0.1em 0.35em; border-radius: 4px; }
         pre { position: relative; background: \(code); padding: 16px 18px; border-radius: 12px; overflow-x: auto; font-size: 0.84em; line-height: 1.5; }
         pre code { background: none; padding: 0; font-size: 1em; }
+        pre .kw { color: \(css(theme.code.keyword)); }
+        pre .str { color: \(css(theme.code.string)); }
+        pre .num { color: \(css(theme.code.number)); }
+        pre .com { color: \(css(theme.code.comment)); }
         pre .language { position: absolute; top: 8px; right: 12px; font: 500 10.5px -apple-system, system-ui, sans-serif; color: \(secondary); }
         blockquote { padding-left: 14px; border-left: 3px solid \(css(theme.accent, alpha: 0.5)); font-style: italic; color: \(css(theme.text, alpha: 0.75)); }
         hr { border: 0; height: 1px; background: \(css(theme.secondary, alpha: 0.35)); }

@@ -24,6 +24,21 @@ enum ThemeID: String, CaseIterable, Identifiable {
     }
 }
 
+/// The four colours a code block uses, as hex like the rest of the theme.
+struct CodeColors: Equatable {
+    let keyword: PlatformColor
+    let string: PlatformColor
+    let number: PlatformColor
+    let comment: PlatformColor
+
+    init(keyword: UInt32, string: UInt32, number: UInt32, comment: UInt32) {
+        self.keyword = PlatformColor(hex: keyword)
+        self.string = PlatformColor(hex: string)
+        self.number = PlatformColor(hex: number)
+        self.comment = PlatformColor(hex: comment)
+    }
+}
+
 struct Theme: Equatable {
     let background: PlatformColor
     let text: PlatformColor
@@ -32,8 +47,19 @@ struct Theme: Equatable {
     let accent: PlatformColor
     let codeBackground: PlatformColor
     let selection: PlatformColor
+    /// Colours inside a code block: keyword, string, number, comment.
+    let code: CodeColors
     let isDark: Bool
     let hasGrain: Bool
+
+    func color(for token: CodeToken) -> PlatformColor {
+        switch token {
+        case .keyword: code.keyword
+        case .string: code.string
+        case .number: code.number
+        case .comment: code.comment
+        }
+    }
 
     static let paper = Theme(
         background: PlatformColor(hex: 0xF4EFE5),
@@ -42,6 +68,7 @@ struct Theme: Equatable {
         accent: PlatformColor(hex: 0xB4532A),
         codeBackground: PlatformColor(hex: 0x6B5A3E, alpha: 0.075),
         selection: PlatformColor(hex: 0xB4532A, alpha: 0.17),
+        code: CodeColors(keyword: 0xA24A22, string: 0x5E7444, number: 0x3F6E72, comment: 0xA69D8E),
         isDark: false,
         hasGrain: true
     )
@@ -53,6 +80,7 @@ struct Theme: Equatable {
         accent: PlatformColor(hex: 0x3569DE),
         codeBackground: PlatformColor(hex: 0x1D1D1F, alpha: 0.05),
         selection: PlatformColor(hex: 0x3569DE, alpha: 0.16),
+        code: CodeColors(keyword: 0xCF222E, string: 0x0A3069, number: 0x0550AE, comment: 0x8E8E93),
         isDark: false,
         hasGrain: false
     )
@@ -64,6 +92,7 @@ struct Theme: Equatable {
         accent: PlatformColor(hex: 0xE39A5B),
         codeBackground: PlatformColor(hex: 0xFFFFFF, alpha: 0.06),
         selection: PlatformColor(hex: 0xE39A5B, alpha: 0.24),
+        code: CodeColors(keyword: 0xE5A06A, string: 0xA8C58A, number: 0x8FC0D0, comment: 0x8A8177),
         isDark: true,
         hasGrain: false
     )

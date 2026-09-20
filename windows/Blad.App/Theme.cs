@@ -1,4 +1,5 @@
 using Blad.Core.Export;
+using Blad.Core.Markdown;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
@@ -8,6 +9,18 @@ namespace Blad;
 
 public enum ThemeId { Paper, Light, Night, System }
 
+/// <summary>The four colours a code block uses.</summary>
+public sealed record CodeColors(Color Keyword, Color String, Color Number, Color Comment)
+{
+    public Color For(CodeToken token) => token switch
+    {
+        CodeToken.Keyword => Keyword,
+        CodeToken.String => String,
+        CodeToken.Number => Number,
+        _ => Comment,
+    };
+}
+
 /// <summary>Blad's colours: the same Papier, Licht and Nacht as on the Mac and iPhone.</summary>
 public sealed record Theme(
     Color Background,
@@ -16,17 +29,22 @@ public sealed record Theme(
     Color Accent,
     Color CodeBackground,
     Color Selection,
+    /// <summary>Keyword, string, number and comment colours inside a code block.</summary>
+    CodeColors Code,
     bool IsDark,
     bool HasGrain)
 {
     public static Theme Paper { get; } = new(
-        Hex(0xF4EFE5), Hex(0x2F2A23), Hex(0xA69D8E), Hex(0xB4532A), Hex(0x6B5A3E, 0.075), Hex(0xB4532A, 0.17), false, true);
+        Hex(0xF4EFE5), Hex(0x2F2A23), Hex(0xA69D8E), Hex(0xB4532A), Hex(0x6B5A3E, 0.075), Hex(0xB4532A, 0.17),
+        new CodeColors(Hex(0xA24A22), Hex(0x5E7444), Hex(0x3F6E72), Hex(0xA69D8E)), false, true);
 
     public static Theme Light { get; } = new(
-        Hex(0xFBFBFA), Hex(0x1D1D1F), Hex(0xA1A1A6), Hex(0x3569DE), Hex(0x1D1D1F, 0.05), Hex(0x3569DE, 0.16), false, false);
+        Hex(0xFBFBFA), Hex(0x1D1D1F), Hex(0xA1A1A6), Hex(0x3569DE), Hex(0x1D1D1F, 0.05), Hex(0x3569DE, 0.16),
+        new CodeColors(Hex(0xCF222E), Hex(0x0A3069), Hex(0x0550AE), Hex(0x8E8E93)), false, false);
 
     public static Theme Night { get; } = new(
-        Hex(0x1B1A19), Hex(0xE5E1D8), Hex(0x6F6A62), Hex(0xE39A5B), Hex(0xFFFFFF, 0.06), Hex(0xE39A5B, 0.24), true, false);
+        Hex(0x1B1A19), Hex(0xE5E1D8), Hex(0x6F6A62), Hex(0xE39A5B), Hex(0xFFFFFF, 0.06), Hex(0xE39A5B, 0.24),
+        new CodeColors(Hex(0xE5A06A), Hex(0xA8C58A), Hex(0x8FC0D0), Hex(0x8A8177)), true, false);
 
     public static ThemeId Parse(string id) => id switch
     {
@@ -64,7 +82,8 @@ public sealed record Theme(
         Color.FromArgb((byte)Math.Round(alpha * 255), color.R, color.G, color.B);
 
     public ExportStyle ToExportStyle(string fontId, double fontSize) => new(
-        Css(Background), Css(Text), Css(Secondary), Css(Accent), Css(CodeBackground), IsDark,
+        Css(Background), Css(Text), Css(Secondary), Css(Accent), Css(CodeBackground),
+        new CodeColours(Css(Code.Keyword), Css(Code.String), Css(Code.Number), Css(Code.Comment)), IsDark,
         EditorFonts.CssFamily(fontId), fontSize);
 
     private static bool SystemIsDark()

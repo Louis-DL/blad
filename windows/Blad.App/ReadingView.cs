@@ -224,6 +224,34 @@ public sealed class ReadingView : UserControl
         return grid;
     }
 
+    /// <summary>Code with its keywords, strings, numbers and comments coloured.</summary>
+    private TextBlock Highlighted(MarkdownBlock.CodeBlock code)
+    {
+        var block = new TextBlock
+        {
+            FontFamily = new FontFamily(EditorFonts.CodeFamily),
+            FontSize = Size * 0.84,
+            LineHeight = Size * 1.3,
+            Foreground = Theme.Brush(theme.Text),
+            IsTextSelectionEnabled = true,
+            Padding = new Thickness(18, 16, 18, 16),
+        };
+        void Add(string text, Color color)
+        {
+            if (text.Length > 0) block.Inlines.Add(new Run { Text = text, Foreground = Theme.Brush(color) });
+        }
+
+        var last = 0;
+        foreach (var span in CodeHighlighter.Tokens(code.Code, code.Language))
+        {
+            Add(code.Code[last..span.Start], theme.Text);
+            Add(code.Code.Substring(span.Start, span.Length), theme.Code.For(span.Token));
+            last = span.Start + span.Length;
+        }
+        Add(code.Code[last..], theme.Text);
+        return block;
+    }
+
     private Border Code(MarkdownBlock.CodeBlock code)
     {
         var grid = new Grid();
@@ -231,16 +259,7 @@ public sealed class ReadingView : UserControl
         {
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            Content = new TextBlock
-            {
-                Text = code.Code,
-                FontFamily = new FontFamily(EditorFonts.CodeFamily),
-                FontSize = Size * 0.84,
-                LineHeight = Size * 1.3,
-                Foreground = Theme.Brush(theme.Text),
-                IsTextSelectionEnabled = true,
-                Padding = new Thickness(18, 16, 18, 16),
-            },
+            Content = Highlighted(code),
         });
         if (code.Language.Length > 0)
         {

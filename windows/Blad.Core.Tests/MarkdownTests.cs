@@ -215,3 +215,42 @@ public class TagTests
         Assert.Equal("examen", Tags.TagName(tag.Link!));
     }
 }
+
+public class CodeHighlighterTests
+{
+    private static string[] Pieces(string code, string language, CodeToken token) =>
+        CodeHighlighter.Tokens(code, language)
+            .Where(span => span.Token == token)
+            .Select(span => code.Substring(span.Start, span.Length))
+            .ToArray();
+
+    [Fact]
+    public void ColoursKeywordsStringsNumbersAndComments()
+    {
+        const string code = "let naam = \"Blad\" // een notitie\nlet jaar = 1789";
+
+        Assert.Equal(["let", "let"], Pieces(code, "swift", CodeToken.Keyword));
+        Assert.Equal(["\"Blad\""], Pieces(code, "swift", CodeToken.String));
+        Assert.Equal(["1789"], Pieces(code, "swift", CodeToken.Number));
+        Assert.Equal(["// een notitie"], Pieces(code, "swift", CodeToken.Comment));
+    }
+
+    [Fact]
+    public void FollowsTheLanguage()
+    {
+        const string code = "# alles hierna is uitleg\ndef jaar(x): return 1789";
+
+        Assert.Equal(["# alles hierna is uitleg"], Pieces(code, "python", CodeToken.Comment));
+        Assert.Equal(["def", "return"], Pieces(code, "python", CodeToken.Keyword));
+        // In Swift a # doesn't start a comment, so that line stays plain text.
+        Assert.Empty(Pieces(code, "swift", CodeToken.Comment));
+    }
+
+    [Fact]
+    public void KeepsTextWithoutColourOutsideTheSpans()
+    {
+        const string code = "geen code, gewoon tekst";
+
+        Assert.Empty(CodeHighlighter.Tokens(code, ""));
+    }
+}

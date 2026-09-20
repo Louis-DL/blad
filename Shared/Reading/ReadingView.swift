@@ -177,8 +177,31 @@ struct ReadingContent: View {
         .padding(.leading, CGFloat(item.depth) * fontSize * 1.4)
     }
 
+    /// Code with its keywords, strings, numbers and comments coloured.
+    private func highlighted(_ code: String, language: String) -> AttributedString {
+        let source = code as NSString
+        var result = AttributedString()
+        var last = 0
+
+        func append(_ piece: String, _ color: Color) {
+            var part = AttributedString(piece)
+            part.foregroundColor = color
+            result += part
+        }
+
+        for (range, token) in CodeHighlighter.tokens(in: code, language: language) {
+            if range.location > last {
+                append(source.substring(with: NSRange(location: last, length: range.location - last)), textColor)
+            }
+            append(source.substring(with: range), Color(platform: theme.color(for: token)))
+            last = NSMaxRange(range)
+        }
+        append(source.substring(from: last), textColor)
+        return result
+    }
+
     private func codeBlock(_ code: String, language: String) -> some View {
-        let text = Text(code)
+        let text = Text(highlighted(code, language: language))
             .font(.system(size: (fontSize * 0.84).rounded(), design: .monospaced))
             .lineSpacing(fontSize * 0.2)
             .padding(.horizontal, 18)
