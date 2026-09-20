@@ -39,8 +39,10 @@ public static class CodeHighlighter
             }
             else if (char.IsAsciiLetter(character) || character is '_' or '#' or '@')
             {
-                var end = index;
+                // A leading # or @ belongs to the word, as in @main; on its own it's just a character.
+                var end = character is '#' or '@' ? index + 1 : index;
                 while (end < code.Length && (char.IsAsciiLetterOrDigit(code[end]) || code[end] == '_')) end++;
+                if (end == index) end = index + 1;
                 if (rules.Keywords.Contains(code[index..end])) spans.Add(new CodeSpan(index, end - index, CodeToken.Keyword));
                 index = end;
             }

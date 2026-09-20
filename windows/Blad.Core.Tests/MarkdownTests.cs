@@ -246,6 +246,19 @@ public class CodeHighlighterTests
         Assert.Empty(Pieces(code, "swift", CodeToken.Comment));
     }
 
+    [Theory]
+    [InlineData("swift", "@main struct App { #available(macOS 27, *) }")]
+    [InlineData("swift", "# in Swift is dit geen commentaar\nlet jaar = 1789")]
+    [InlineData("", "### @@@ ###")]
+    [InlineData("python", "s = 'niet afgesloten\nx = 1")]
+    public void AlwaysReachesTheEndOfTheCode(string language, string code)
+    {
+        // A stray # or @ once left the highlighter walking in place.
+        var spans = CodeHighlighter.Tokens(code, language);
+
+        Assert.All(spans, span => Assert.InRange(span.Start + span.Length, 0, code.Length));
+    }
+
     [Fact]
     public void KeepsTextWithoutColourOutsideTheSpans()
     {

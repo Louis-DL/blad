@@ -33,8 +33,10 @@ nonisolated enum CodeHighlighter {
                 tokens.append((NSRange(location: index, length: end - index), .number))
                 index = end
             } else if isWordStart(character) {
-                var end = index
+                // A leading # or @ belongs to the word, as in @main; on its own it's just a character.
+                var end = character == 35 || character == 64 ? index + 1 : index
                 while end < source.length, isWordCharacter(source.character(at: end)) { end += 1 }
+                if end == index { end = index + 1 }
                 let word = source.substring(with: NSRange(location: index, length: end - index))
                 if rules.keywords.contains(word) {
                     tokens.append((NSRange(location: index, length: end - index), .keyword))
