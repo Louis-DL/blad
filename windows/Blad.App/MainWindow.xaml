@@ -118,6 +118,29 @@
                     <StackPanel x:Name="WelcomeContent" MaxWidth="560" Margin="40" Spacing="28" VerticalAlignment="Center" />
                 </ScrollViewer>
 
+                <!-- Find and replace inside the open page (Ctrl+F). -->
+                <Border x:Name="FindBar" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top"
+                        Margin="0,12,150,0" Padding="10,8" CornerRadius="12" BorderThickness="1"
+                        Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBox x:Name="FindBox" Width="180" PlaceholderText="Zoek in pagina" />
+                        <TextBlock x:Name="FindCount" VerticalAlignment="Center" MinWidth="74" Opacity="0.6" FontSize="12" />
+                        <Button x:Name="FindPreviousButton" ToolTipService.ToolTip="Vorige (Shift+Enter)">
+                            <FontIcon Glyph="&#xE70E;" FontSize="12" />
+                        </Button>
+                        <Button x:Name="FindNextButton" ToolTipService.ToolTip="Volgende (Enter)">
+                            <FontIcon Glyph="&#xE70D;" FontSize="12" />
+                        </Button>
+                        <TextBox x:Name="ReplaceBox" Width="150" PlaceholderText="Vervang door" />
+                        <Button x:Name="ReplaceButton" Content="Vervang" />
+                        <Button x:Name="ReplaceAllButton" Content="Alles" />
+                        <Button x:Name="CloseFindButton" ToolTipService.ToolTip="Sluit (Esc)">
+                            <FontIcon Glyph="&#xE711;" FontSize="12" />
+                        </Button>
+                    </StackPanel>
+                </Border>
+
                 <StackPanel x:Name="PageActions" Orientation="Horizontal" Spacing="4" Margin="0,10,14,0"
                             HorizontalAlignment="Right" VerticalAlignment="Top">
                     <Button x:Name="ModeButton" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Lezen of bewerken (Ctrl+R)">

@@ -175,6 +175,7 @@ final class EditorTextView: NSTextView {
 
     func applyStyle(_ style: EditorStyle) {
         styler.update(style)
+        isContinuousSpellCheckingEnabled = style.checksSpelling
         insertionPointColor = style.theme.accent
         selectedTextAttributes = [.backgroundColor: style.theme.selection]
         typingAttributes = styler.baseAttributes

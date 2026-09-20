@@ -45,9 +45,16 @@ public sealed partial class MainWindow
         Shortcut(VirtualKey.W, control, () => { if (active is not null) ClosePage(active.Path); });
         Shortcut(VirtualKey.S, control, library.SaveAll);
         Shortcut(VirtualKey.R, control, ToggleReading);
+        Shortcut(VirtualKey.F, control, ShowFind);
+        Shortcut(VirtualKey.F3, VirtualKeyModifiers.None, () => { if (IsFindOpen) Step(1); });
+        Shortcut(VirtualKey.F3, VirtualKeyModifiers.Shift, () => { if (IsFindOpen) Step(-1); });
         Shortcut(VirtualKey.F, controlShift, () => SetFocusMode(!isFocusMode));
         Shortcut(VirtualKey.F11, VirtualKeyModifiers.None, () => SetFocusMode(!isFocusMode));
-        Shortcut(VirtualKey.Escape, VirtualKeyModifiers.None, () => { if (isFocusMode) SetFocusMode(false); });
+        Shortcut(VirtualKey.Escape, VirtualKeyModifiers.None, () =>
+        {
+            if (IsFindOpen) CloseFind();
+            else if (isFocusMode) SetFocusMode(false);
+        });
         Shortcut(VirtualKey.E, controlShift, () => _ = ExportAsync(pdf: true));
         Shortcut(VirtualKey.Tab, control, () => NextTab(1));
         Shortcut(VirtualKey.Tab, controlShift, () => NextTab(-1));

@@ -55,7 +55,6 @@ public sealed partial class MarkdownEditor : UserControl
     {
         box.AcceptsReturn = true;
         box.TextWrapping = TextWrapping.Wrap;
-        box.IsSpellCheckEnabled = false;
         box.IsTextPredictionEnabled = false;
         box.ClipboardCopyFormat = RichEditClipboardFormat.PlainText;
         box.DisabledFormattingAccelerators = DisabledFormattingAccelerators.All;
@@ -87,6 +86,63 @@ public sealed partial class MarkdownEditor : UserControl
         Content = box;
     }
 
+    /// <summary>The page's text, with the \r line breaks the text box works in.</summary>
+    public string Text => ReadText();
+
+    /// <summary>Where the caret is, and how much is selected.</summary>
+    public (int Start, int Length) Selection
+    {
+        get
+        {
+            var selection = box.Document.Selection;
+            return (selection.StartPosition, Math.Max(0, selection.EndPosition - selection.StartPosition));
+        }
+    }
+
+    /// <summary>Selects a stretch of text and scrolls it into view.</summary>
+    public void Select(int start, int length)
+    {
+        var selection = box.Document.Selection;
+        selection.SetRange(start, start + length);
+        selection.ScrollIntoView(PointOptions.None);
+    }
+
+    /// <summary>Replaces a stretch of text as one undo step, and selects what took its place.</summary>
+    public void ReplaceRange(int start, int length, string replacement)
+    {
+        var text = ReadText();
+        if (start < 0 || length < 0 || start + length > text.Length) return;
+        PushUndo();
+        var updated = string.Concat(text.AsSpan(0, start), replacement, text.AsSpan(start + length));
+        SetText(updated, start + replacement.Length);
+        Edited?.Invoke(updated.Replace('\r', '\n'));
+        Select(start, replacement.Length);
+    }
+
+    /// <summary>Replaces every match as one undo step, and returns how many there were.</summary>
+    public int ReplaceAll(string search, string replacement)
+    {
+        var text = ReadText();
+        if (search.Length == 0) return 0;
+        var updated = new System.Text.StringBuilder();
+        int at = 0, found = 0;
+        while (true)
+        {
+            var next = text.IndexOf(search, at, StringComparison.CurrentCultureIgnoreCase);
+            if (next < 0) break;
+            updated.Append(text, at, next - at).Append(replacement);
+            at = next + search.Length;
+            found++;
+        }
+        if (found == 0) return 0;
+        updated.Append(text, at, text.Length - at);
+        PushUndo();
+        var result = updated.ToString();
+        SetText(result, Math.Min(box.Document.Selection.StartPosition, result.Length));
+        Edited?.Invoke(result.Replace('\r', '\n'));
+        return found;
+    }
+
     public void Load(PageDocument page, Theme pageTheme)
     {
         document = page;
@@ -106,6 +162,7 @@ public sealed partial class MarkdownEditor : UserControl
         // In a dark theme the text box paints every character in its own foreground colour, which
         // would erase the quiet syntax and coloured links. Blad sets all colours itself, so keep it light.
         box.RequestedTheme = ElementTheme.Light;
+        box.IsSpellCheckEnabled = AppSettings.Current.SpellCheck;
         UpdateLayout(restyleIfNeeded: false);
         Restyle(full: true);
     }
@@ -186,6 +243,15 @@ public sealed partial class MarkdownEditor : UserControl
         {
             LinkRequested?.Invoke(CaretPoint());
         }
+    }
+
+    /// <summary>Keeps the text as it is now, so the next change can be undone in one step.</summary>
+    private void PushUndo()
+    {
+        undo.Add((lastText, box.Document.Selection.StartPosition));
+        if (undo.Count > 500) undo.RemoveAt(0);
+        redo.Clear();
+        lastUndoPoint = DateTime.MinValue;
     }
 
     private void Undo()

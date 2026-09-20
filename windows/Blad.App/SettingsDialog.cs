@@ -32,6 +32,9 @@ public static class SettingsDialog
         var tabs = new ToggleSwitch { Header = "Tabbladen", IsOn = settings.ShowTabs };
         tabs.Toggled += (_, _) => Apply(() => settings.ShowTabs = tabs.IsOn);
 
+        var spelling = new ToggleSwitch { Header = "Spellingcontrole", IsOn = settings.SpellCheck };
+        spelling.Toggled += (_, _) => Apply(() => settings.SpellCheck = spelling.IsOn);
+
         var words = new ToggleSwitch { Header = "Woordentelling", IsOn = settings.ShowWordCount };
         words.Toggled += (_, _) => Apply(() => settings.ShowWordCount = words.IsOn);
 
@@ -53,7 +56,7 @@ public static class SettingsDialog
                 Content = new StackPanel
                 {
                     Spacing = 16,
-                    Children = { theme, grain, font, size, width, tabs, words, sort },
+                    Children = { theme, grain, font, size, width, spelling, tabs, words, sort },
                 },
             },
         };

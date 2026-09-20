@@ -55,6 +55,7 @@ public sealed partial class MainWindow : Window
 
         WireSidebar();
         WireCommands();
+        WireFind();
         _ = LoadPaperAsync();
         ApplySettings();
         RestoreSession();

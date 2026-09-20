@@ -13,6 +13,8 @@ struct EditorStyle: Equatable {
     var focusMode: Bool
     var dimsParagraphs: Bool
     var typewriterScrolling: Bool
+    /// Underline misspelled words. Off for code-heavy pages.
+    var checksSpelling: Bool = false
     /// Width of the margin where markers hang, in multiples of the font size. Narrower on iPhone.
     var gutterScale: CGFloat = 3.2
 }

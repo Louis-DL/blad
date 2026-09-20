@@ -18,6 +18,7 @@ public sealed class AppSettings
     public double LineWidth { get; set; } = 680;
     public bool ShowTabs { get; set; } = true;
     public bool ShowWordCount { get; set; } = true;
+    public bool SpellCheck { get; set; } = true;
     public string Sort { get; set; } = "name";
 
     [JsonIgnore]

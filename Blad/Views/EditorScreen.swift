@@ -11,6 +11,7 @@ struct EditorScreen: View {
     @AppStorage(Pref.dimParagraphs) private var dimParagraphs = true
     @AppStorage(Pref.typewriter) private var typewriter = true
     @AppStorage(Pref.showWordCount) private var showWordCount = true
+    @AppStorage(Pref.spellCheck) private var spellCheck = true
     @State private var backlinks: [Backlink] = []
 
     var body: some View {
@@ -91,7 +92,8 @@ struct EditorScreen: View {
             lineWidth: lineWidth,
             focusMode: model.isFocusMode,
             dimsParagraphs: dimParagraphs,
-            typewriterScrolling: typewriter
+            typewriterScrolling: typewriter,
+            checksSpelling: spellCheck
         )
     }
 }

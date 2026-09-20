@@ -23,6 +23,7 @@ private struct AppearanceSettings: View {
     @AppStorage(Pref.font) private var fontID = EditorFont.defaultID
     @AppStorage(Pref.fontSize) private var fontSize = Pref.defaultFontSize
     @AppStorage(Pref.lineWidth) private var lineWidth = Pref.defaultLineWidth
+    @AppStorage(Pref.spellCheck) private var spellCheck = true
 
     var body: some View {
         Form {
@@ -60,6 +61,8 @@ private struct AppearanceSettings: View {
                             .frame(width: 44, alignment: .trailing)
                     }
                 }
+
+                Toggle("Spellingcontrole", isOn: $spellCheck)
 
                 LabeledContent("Regelbreedte") {
                     Slider(value: $lineWidth, in: 480...1000, step: 20) {

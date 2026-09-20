@@ -8,6 +8,7 @@ struct SettingsSheet: View {
     @AppStorage(Pref.font) private var fontID = EditorFont.defaultID
     @AppStorage(Pref.fontSize) private var fontSize = Pref.defaultFontSize
     @AppStorage(Pref.showWordCount) private var showWordCount = true
+    @AppStorage(Pref.spellCheck) private var spellCheck = true
     @AppStorage(Pref.sortOrder) private var sortOrder: FileSort = .name
 
     var body: some View {
@@ -46,6 +47,8 @@ struct SettingsSheet: View {
                     Stepper(value: $fontSize, in: 13...28, step: 1) {
                         LabeledContent("Grootte", value: "\(Int(fontSize)) pt")
                     }
+
+                    Toggle("Spellingcontrole", isOn: $spellCheck)
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Een rustige plek")

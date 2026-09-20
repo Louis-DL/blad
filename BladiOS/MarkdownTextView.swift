@@ -16,6 +16,13 @@ final class EditorController {
     func toggleItalic() { textView?.wrapSelection(with: "*") }
     func startLink() { textView?.startLink() }
     func dismissKeyboard() { textView?.resignFirstResponder() }
+
+    /// Opens iOS' own find panel over the page, with the replace field open.
+    func find() {
+        guard let textView else { return }
+        textView.becomeFirstResponder()
+        textView.findInteraction?.presentFindNavigator(showingReplace: true)
+    }
 }
 
 /// Bridges the UIKit text view into SwiftUI, like MarkdownEditor does on the Mac.
@@ -154,6 +161,7 @@ final class BladTextView: UITextView {
         backgroundColor = .clear
         alwaysBounceVertical = true
         keyboardDismissMode = .interactive
+        isFindInteractionEnabled = true
         smartQuotesType = .no
         smartDashesType = .no
         smartInsertDeleteType = .no
@@ -167,6 +175,11 @@ final class BladTextView: UITextView {
     func applyStyle(_ style: EditorStyle) {
         styler.update(style)
         tintColor = style.theme.accent
+        let spelling: UITextSpellCheckingType = style.checksSpelling ? .yes : .no
+        if spellCheckingType != spelling {
+            spellCheckingType = spelling
+            if isFirstResponder { reloadInputViews() }
+        }
         restyle()
         updateInsets()
     }

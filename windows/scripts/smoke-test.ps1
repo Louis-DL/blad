@@ -154,6 +154,20 @@ Start-Sleep -Seconds 1
 Start-Sleep -Seconds 1
 [System.Windows.Forms.SendKeys]::SendWait("^{HOME}{DOWN}{DOWN}{END}")
 foreach ($i in 1..2) { Start-Sleep -Milliseconds 400; Save-Screen "7-cursor-$i" }
+
+# 7b. Find and replace (Ctrl+F) and the settings window.
+[System.Windows.Forms.SendKeys]::SendWait("^f")
+Start-Sleep -Seconds 1
+[System.Windows.Forms.SendKeys]::SendWait("Tijdlijn")
+Start-Sleep -Seconds 2
+Save-Screen "9-zoek-in-pagina"
+[System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+Start-Sleep -Seconds 1
+[System.Windows.Forms.SendKeys]::SendWait("^,")
+Start-Sleep -Seconds 3
+Save-Screen "10-instellingen"
+[System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+Start-Sleep -Seconds 1
 Stop-Blad $blad
 
 # 8. Cambria, to see the editor takes it.

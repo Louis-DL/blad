@@ -15,6 +15,7 @@ struct PageScreen: View {
     @AppStorage(Pref.lineWidth) private var lineWidth = Pref.defaultLineWidth
     @AppStorage(Pref.paperGrain) private var paperGrain = true
     @AppStorage(Pref.showWordCount) private var showWordCount = true
+    @AppStorage(Pref.spellCheck) private var spellCheck = true
 
     @State private var editor = EditorController()
     @State private var isPickingLink = false
@@ -144,6 +145,9 @@ struct PageScreen: View {
                 Button("Focusmodus", systemImage: "scope") {
                     withAnimation(.smooth) { isFocusMode = true }
                 }
+                Button("Zoek in pagina", systemImage: "magnifyingglass") { editor.find() }
+                    .keyboardShortcut("f")
+                    .disabled(document.isReading)
                 Divider()
                 Button("Deel als PDF", systemImage: "doc.richtext") { share(.pdf) }
                 Button("Deel als HTML", systemImage: "chevron.left.forwardslash.chevron.right") { share(.html) }
@@ -177,6 +181,7 @@ struct PageScreen: View {
             focusMode: isFocusMode,
             dimsParagraphs: false,
             typewriterScrolling: false,
+            checksSpelling: spellCheck,
             // A phone can't spare three characters of margin on each side.
             gutterScale: sizeClass == .compact ? 1.2 : 3.2
         )

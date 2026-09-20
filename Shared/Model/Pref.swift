@@ -13,6 +13,7 @@ enum Pref {
     static let dimParagraphs = "focusDimParagraphs"
     static let typewriter = "focusTypewriter"
     static let sortOrder = "sortOrder"
+    static let spellCheck = "spellCheck"
 
     static let defaultFontSize = 17.0
     static let defaultLineWidth = 680.0
