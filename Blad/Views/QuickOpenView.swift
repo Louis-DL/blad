@@ -75,6 +75,9 @@ private struct QuickOpenView: View {
         .glassEffect(.regular, in: .rect(cornerRadius: 24))
         .onChange(of: query) { selection = 0 }
         .task {
+            // Clicking a #tag opens this list with that tag filled in.
+            query = model.quickOpenQuery
+            model.quickOpenQuery = ""
             isSearchFieldFocused = true
             entries = await model.buildSearchIndex()
         }

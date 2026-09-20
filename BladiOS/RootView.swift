@@ -31,7 +31,12 @@ struct RootView: View {
             )
         } detail: {
             if let selection, let document = library.document(for: selection) {
-                PageScreen(document: document, theme: theme, onOpenPage: { self.selection = $0 })
+                PageScreen(
+                    document: document,
+                    theme: theme,
+                    onOpenPage: { self.selection = $0 },
+                    onCloseForSearch: { self.selection = nil }
+                )
                     .id(document.id)
             } else {
                 StartView(theme: theme, onNewSpace: beginNewSpace, onOpenFolder: openExistingFolder) {
@@ -130,6 +135,11 @@ private struct PagesList: View {
         .listStyle(.sidebar)
         .navigationTitle("Blad")
         .searchable(text: $query, prompt: "Zoek in je pagina's")
+        .onChange(of: library.pendingSearch) { _, pending in
+            guard let pending else { return }
+            query = pending
+            library.pendingSearch = nil
+        }
         .task(id: query.isEmpty) {
             if !query.isEmpty { entries = await library.buildSearchIndex() }
         }

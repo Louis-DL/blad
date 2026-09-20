@@ -58,6 +58,12 @@ extension AppModel {
     }
 
     /// Follows a markdown link or URL: markdown files open in Blad, everything else in its own app.
+    /// Clicking a `#tag` searches for it across the spaces.
+    func search(tag name: String) {
+        quickOpenQuery = "#" + name
+        isQuickOpenPresented = true
+    }
+
     func openLink(_ target: String, from source: URL) {
         let raw = target.trimmingCharacters(in: .whitespaces)
         guard !raw.isEmpty, !raw.hasPrefix("#") else { return }

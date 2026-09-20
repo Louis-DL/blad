@@ -245,7 +245,7 @@ struct ReadingContent: View {
             interpretedSyntax: .inlineOnlyPreservingWhitespace,
             failurePolicy: .returnPartiallyParsedIfPossible
         )
-        let source = WikiLinks.markdownLinks(in: markdown)
+        let source = Tags.markdownLinks(in: WikiLinks.markdownLinks(in: markdown))
         var result = (try? AttributedString(markdown: source, options: options, baseURL: baseURL)) ?? AttributedString(markdown)
         for range in result.runs.filter({ $0.link != nil }).map(\.range) {
             result[range].foregroundColor = accent

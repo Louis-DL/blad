@@ -194,3 +194,24 @@ public class OutlineTests
         Assert.Equal("Wel een kopje", heading.Title);
     }
 }
+
+public class TagTests
+{
+    [Fact]
+    public void FindsTagsButNotHeadings()
+    {
+        Assert.Equal(["examen", "geschiedenis/1789"], Tags.Names("# Kopje\n\nLezen voor #examen, zie #geschiedenis/1789."));
+        Assert.Empty(Tags.Names("## Nog een kopje"));
+        Assert.Empty(Tags.Names("Kleur #123456 is geen tag."));
+    }
+
+    [Fact]
+    public void ReadingModeMakesTagsClickable()
+    {
+        var runs = InlineParser.Parse("Lezen voor #examen.");
+
+        var tag = Assert.Single(runs, run => run.Link is not null);
+        Assert.Equal("#examen", tag.Text);
+        Assert.Equal("examen", Tags.TagName(tag.Link!));
+    }
+}

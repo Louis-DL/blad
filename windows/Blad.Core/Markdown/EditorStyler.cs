@@ -21,6 +21,8 @@ public enum SpanKind
     Url,
     ListMarker,
     DoneTask,
+    /// <summary>A #tag, shown in the accent colour like a link.</summary>
+    Tag,
 }
 
 public sealed record StyleSpan(int Start, int Length, SpanKind Kind);
@@ -145,6 +147,13 @@ public static partial class EditorStyler
                 spans.Add(new StyleSpan(offset + match.Index, match.Length, SpanKind.Italic));
                 AddMarkers(match, 1, offset, spans);
             }
+        }
+        foreach (Match match in Tags.Pattern().Matches(line))
+        {
+            if (!OutsideCode(match)) continue;
+            // Group 1 is the space before the tag, which keeps its own colour.
+            var start = match.Index + match.Groups[1].Length;
+            spans.Add(new StyleSpan(offset + start, match.Groups[2].Length + 1, SpanKind.Tag));
         }
         foreach (Match match in Strikethrough().Matches(line))
         {

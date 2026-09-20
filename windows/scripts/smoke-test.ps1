@@ -76,7 +76,7 @@ New-Item -ItemType Directory -Force (Join-Path $space "Hoofdstukken") | Out-Null
 @"
 # De Franse Revolutie
 
-Samenvatting voor het examen van **vrijdag**. Zie ook [[Tijdlijn]] en *hoofdstuk 3*.
+Samenvatting voor het examen van **vrijdag**. Zie ook [[Tijdlijn]] en *hoofdstuk 3*. #examen
 
 ## Oorzaken
 

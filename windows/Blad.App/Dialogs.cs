@@ -17,8 +17,10 @@ public sealed class SearchPanel : UserControl
     /// <summary>A result was chosen; the argument is the page's path.</summary>
     public event Action<string>? Chosen;
 
-    public SearchPanel()
+    public SearchPanel(string startWith = "")
     {
+        query.Text = startWith;
+        query.SelectionStart = startWith.Length;
         query.TextChanged += (_, _) => Update();
         query.KeyDown += OnKeyDown;
         results.IsItemClickEnabled = true;

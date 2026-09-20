@@ -18,7 +18,7 @@ public sealed record InlineRun(string Text, InlineStyle Style, string? Link = nu
 /// <summary>Splits a line of markdown into styled runs, the way reading mode shows it.</summary>
 public static partial class InlineParser
 {
-    private enum Token { Code, WikiLink, Image, Link, Url, Bold, ItalicStar, ItalicUnderscore, Strike }
+    private enum Token { Code, WikiLink, Image, Link, Url, Tag, Bold, ItalicStar, ItalicUnderscore, Strike }
 
     // Earlier in this list wins when two tokens start at the same place.
     private static readonly (Token Kind, Regex Pattern)[] Tokens =
@@ -28,6 +28,7 @@ public static partial class InlineParser
         (Token.Image, ImagePattern()),
         (Token.Link, LinkPattern()),
         (Token.Url, UrlPattern()),
+        (Token.Tag, Tags.Pattern()),
         (Token.Bold, BoldPattern()),
         (Token.ItalicStar, ItalicStarPattern()),
         (Token.ItalicUnderscore, ItalicUnderscorePattern()),
@@ -65,6 +66,11 @@ public static partial class InlineParser
                     var page = match.Groups[1].Value.Trim();
                     var shown = match.Groups[2].Success ? match.Groups[2].Value : page;
                     runs.Add(new InlineRun(shown, style, WikiLinks.LinkTo(page)));
+                    break;
+                case Token.Tag:
+                    // Group 1 is the space before the tag, which isn't part of the link.
+                    if (match.Groups[1].Length > 0) runs.Add(new InlineRun(match.Groups[1].Value, style, link));
+                    runs.Add(new InlineRun("#" + match.Groups[2].Value, style, Tags.LinkTo(match.Groups[2].Value)));
                     break;
                 case Token.Image:
                     // Images inside a sentence (like badges) show their description.

@@ -26,6 +26,8 @@ extension NSAttributedString.Key {
     static let inlineCode = NSAttributedString.Key("BladInlineCode")
     /// The page name of a `[[page]]` link, for ⌘-click.
     static let wikiLink = NSAttributedString.Key("BladWikiLink")
+    /// The name of a `#tag`, for ⌘-click.
+    static let tagName = NSAttributedString.Key("BladTagName")
     /// The destination of a markdown link or bare URL, for ⌘-click.
     static let linkTarget = NSAttributedString.Key("BladLinkTarget")
     /// The source of an image previewed under its markdown line.
@@ -230,6 +232,12 @@ final class MarkdownStyler {
             let target = (line as NSString).substring(with: match.range(at: 2))
             storage.addAttributes([.foregroundColor: theme.secondary, .linkTarget: target], range: shifted(match.range, by: offset))
             storage.addAttribute(.foregroundColor, value: theme.accent, range: shifted(match.range(at: 1), by: offset))
+        }
+        for match in Tags.pattern.matches(in: line, range: local) where isOutsideCode(match.range) {
+            let name = (line as NSString).substring(with: match.range(at: 2))
+            // Group 1 is the space before the tag, which keeps its own colour.
+            let tag = NSRange(location: match.range.location + match.range(at: 1).length, length: name.utf16.count + 1)
+            storage.addAttributes([.foregroundColor: theme.accent, .tagName: name], range: shifted(tag, by: offset))
         }
         for match in WikiLinks.pattern.matches(in: line, range: local) where isOutsideCode(match.range) {
             let page = (line as NSString).substring(with: match.range(at: 1))

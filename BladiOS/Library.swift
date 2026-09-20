@@ -19,6 +19,8 @@ final class Library {
     }
 
     private(set) var spaces: [Space] = []
+    /// Set by tapping a #tag: the pages list opens with that tag in its search field.
+    var pendingSearch: String?
     private(set) var trees: [URL: [FileNode]] = [:]
     private(set) var lastRename: Rename?
     var errorMessage: String?

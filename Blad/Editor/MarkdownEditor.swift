@@ -15,6 +15,8 @@ struct MarkdownEditor: NSViewRepresentable {
     let onOpenPage: (String) -> Void
     /// ⌘-click on a markdown link or URL.
     let onOpenLink: (String) -> Void
+    /// ⌘-click on a `#tag`: searches for it.
+    let onOpenTag: (String) -> Void
     /// Saves pasted or dropped images next to the page and returns the markdown to insert.
     let importImages: (ImageImporter.Source) -> [String]
     let onEscape: () -> Void
@@ -31,6 +33,7 @@ struct MarkdownEditor: NSViewRepresentable {
         textView.onEscape = { [weak coordinator] in coordinator?.parent.onEscape() }
         textView.onOpenPage = { [weak coordinator] in coordinator?.parent.onOpenPage($0) }
         textView.onOpenLink = { [weak coordinator] in coordinator?.parent.onOpenLink($0) }
+        textView.onOpenTag = { [weak coordinator] in coordinator?.parent.onOpenTag($0) }
         textView.pages = { [weak coordinator] in coordinator?.parent.pages() ?? [] }
         textView.importImages = { [weak coordinator] in coordinator?.parent.importImages($0) ?? [] }
         textView.baseURL = document.url.deletingLastPathComponent()
@@ -130,6 +133,7 @@ final class EditorTextView: NSTextView {
     var onEscape: (() -> Void)?
     var onOpenPage: ((String) -> Void)?
     var onOpenLink: ((String) -> Void)?
+    var onOpenTag: ((String) -> Void)?
     var pages: (() -> [PageRef])?
     var importImages: ((ImageImporter.Source) -> [String])?
     /// The page's folder, for resolving relative image paths.
@@ -461,6 +465,10 @@ final class EditorTextView: NSTextView {
                 }
                 if let target = storage.attribute(.linkTarget, at: candidate, effectiveRange: nil) as? String {
                     onOpenLink?(target)
+                    return
+                }
+                if let tag = storage.attribute(.tagName, at: candidate, effectiveRange: nil) as? String {
+                    onOpenTag?(tag)
                     return
                 }
             }

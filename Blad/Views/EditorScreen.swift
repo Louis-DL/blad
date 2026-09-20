@@ -25,6 +25,7 @@ struct EditorScreen: View {
                 pages: { model.pageRefs },
                 onOpenPage: { model.openPage(named: $0, from: document.url) },
                 onOpenLink: { model.openLink($0, from: document.url) },
+                onOpenTag: { model.search(tag: $0) },
                 importImages: { source in
                     do {
                         return try ImageImporter.importImages(source, for: document.url)
@@ -69,6 +70,10 @@ struct EditorScreen: View {
                 .padding(18)
         }
         .environment(\.openURL, OpenURLAction { url in
+            if let tag = Tags.name(from: url) {
+                model.search(tag: tag)
+                return .handled
+            }
             if url.scheme == WikiLinks.urlScheme {
                 let name = String(url.absoluteString.dropFirst(WikiLinks.urlScheme.count + 1))
                 model.openPage(named: name.removingPercentEncoding ?? name, from: document.url)

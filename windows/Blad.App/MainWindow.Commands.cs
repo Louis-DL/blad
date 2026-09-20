@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Blad.Core.Export;
 using Blad.Core.Images;
+using Blad.Core.Markdown;
 using Blad.Core.Pages;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -118,10 +119,11 @@ public sealed partial class MainWindow
 
     // MARK: Search and links
 
-    private async Task ShowSearchAsync()
+    /// <param name="startWith">What the search field starts with; a #tag when one was clicked.</param>
+    private async Task ShowSearchAsync(string startWith = "")
     {
         if (isShowingDialog) return;
-        var panel = new SearchPanel();
+        var panel = new SearchPanel(startWith);
         var dialog = new ContentDialog { XamlRoot = Root.XamlRoot, Content = panel, CloseButtonText = "Sluit" };
         panel.Chosen += path =>
         {
@@ -155,6 +157,11 @@ public sealed partial class MainWindow
     private void OpenLink(string target, bool isPage)
     {
         if (active is null) return;
+        if (Tags.TagName(target) is { } tag)
+        {
+            _ = ShowSearchAsync("#" + tag);
+            return;
+        }
         if (isPage)
         {
             if (library.OpenPage(target, active.Path) is { } page) Show(page);

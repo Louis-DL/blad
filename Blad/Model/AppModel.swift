@@ -29,6 +29,8 @@ final class AppModel {
     var isQuickOpenPresented = false
     /// The list of headings of the open page, shown from the toolbar.
     var isOutlinePresented = false
+    /// What the search field starts with when it opens; set by clicking a #tag.
+    var quickOpenQuery = ""
 
     var activeDocument: DocumentModel? {
         documents.first { $0.id == activeDocumentID }

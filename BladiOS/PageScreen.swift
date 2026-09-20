@@ -7,6 +7,8 @@ struct PageScreen: View {
     let document: DocumentModel
     let theme: Theme
     let onOpenPage: (URL) -> Void
+    /// Tapping a #tag leaves the page so the search field can show what has that tag.
+    let onCloseForSearch: () -> Void
 
     @Environment(Library.self) private var library
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -130,6 +132,11 @@ struct PageScreen: View {
             ActivityView(items: [file.url])
         }
         .environment(\.openURL, OpenURLAction { url in
+            if let tag = Tags.name(from: url) {
+                library.pendingSearch = "#" + tag
+                onCloseForSearch()
+                return .handled
+            }
             if url.scheme == WikiLinks.urlScheme {
                 let name = String(url.absoluteString.dropFirst(WikiLinks.urlScheme.count + 1))
                 if let page = library.openPage(named: name.removingPercentEncoding ?? name, from: document.url) {

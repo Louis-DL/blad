@@ -375,6 +375,15 @@ public sealed partial class MarkdownEditor : UserControl
                 return;
             }
         }
+        foreach (Match match in Tags.Pattern().Matches(line))
+        {
+            var start = match.Index + match.Groups[1].Length;
+            if (column >= start && column <= start + match.Groups[2].Length + 1)
+            {
+                LinkOpened?.Invoke(Tags.LinkTo(match.Groups[2].Value), false);
+                return;
+            }
+        }
         foreach (Match match in LinkOrUrl().Matches(line))
         {
             if (column >= match.Index && column <= match.Index + match.Length)
@@ -625,6 +634,7 @@ public sealed partial class MarkdownEditor : UserControl
             case SpanKind.LinkText:
             case SpanKind.Url:
             case SpanKind.ListMarker:
+            case SpanKind.Tag:
                 format.ForegroundColor = theme.Accent;
                 break;
             case SpanKind.DoneTask:
