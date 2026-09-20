@@ -8,7 +8,8 @@ namespace Blad;
 /// </summary>
 public static class PdfExporter
 {
-    public static async Task ExportAsync(string html, string destination, nint windowHandle)
+    /// <param name="numberPages">True for a bundle: Edge prints the sheet number in the footer.</param>
+    public static async Task ExportAsync(string html, string destination, nint windowHandle, bool numberPages = false)
     {
         // A file rather than NavigateToString: pages with embedded images can be larger than its 2 MB limit.
         var page = Path.Combine(Path.GetTempPath(), $"blad-export-{Guid.NewGuid():N}.html");
@@ -32,7 +33,8 @@ public static class PdfExporter
             settings.MarginTop = settings.MarginBottom = 0.8;
             settings.MarginLeft = settings.MarginRight = 0.85;
             settings.ShouldPrintBackgrounds = true;
-            settings.ShouldPrintHeaderAndFooter = false;
+            settings.ShouldPrintHeaderAndFooter = numberPages;
+            if (numberPages) settings.HeaderTitle = "";
             if (!await web.PrintToPdfAsync(destination, settings))
             {
                 throw new IOException("De PDF kon niet gemaakt worden.");

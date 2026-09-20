@@ -113,6 +113,7 @@ public sealed partial class MainWindow
             menu.Items.Add(new MenuFlyoutSeparator());
         }
         if (!entry.IsSpace) Add("Wijzig naam…", "\uE8AC", () => _ = RenameAsync(entry.Path));
+        if (entry.IsSpace) Add("Exporteer ruimte als PDF…", "\uEA90", () => _ = ExportSpaceAsync(entry.Path));
         Add("Toon in Verkenner", "\uEC50", () => ShowInExplorer(entry.Path));
         menu.Items.Add(new MenuFlyoutSeparator());
         if (entry.IsSpace) Add("Verwijder uit Blad", "\uE738", () => library.RemoveSpace(entry.Path));

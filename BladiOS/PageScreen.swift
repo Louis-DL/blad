@@ -253,13 +253,13 @@ struct PageScreen: View {
     }
 }
 
-private struct SharedFile: Identifiable {
+struct SharedFile: Identifiable {
     let id = UUID()
     let url: URL
 }
 
 /// The system share sheet.
-private struct ActivityView: UIViewControllerRepresentable {
+struct ActivityView: UIViewControllerRepresentable {
     let items: [Any]
 
     func makeUIViewController(context: Context) -> UIActivityViewController {

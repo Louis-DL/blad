@@ -254,3 +254,26 @@ public class CodeHighlighterTests
         Assert.Empty(CodeHighlighter.Tokens(code, ""));
     }
 }
+
+public class BundleExportTests
+{
+    [Fact]
+    public void PutsEveryPageInOneDocumentWithContents()
+    {
+        var html = HtmlExporter.ExportBundle(
+            [
+                new HtmlExporter.Section("Franse Revolutie", "# De Franse Revolutie\n\nTekst.", "/vak/Franse Revolutie.md"),
+                new HtmlExporter.Section("Tijdlijn", "# Tijdlijn\n\n1. 1789", "/vak/Tijdlijn.md"),
+            ],
+            "Geschiedenis",
+            ExportStyle.Paper);
+
+        Assert.Contains("<h1>Geschiedenis</h1>", html);
+        Assert.Contains("<h2>Inhoud</h2>", html);
+        Assert.Contains("<li>Franse Revolutie</li>", html);
+        Assert.Contains("<li>Tijdlijn</li>", html);
+        Assert.Contains("2 pagina's", html);
+        // Each page starts on its own sheet when printed.
+        Assert.Equal(3, html.Split("class=\"page").Length - 1);
+    }
+}

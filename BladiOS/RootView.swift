@@ -112,6 +112,7 @@ private struct PagesList: View {
     @State private var renaming: URL?
     @State private var newName = ""
     @State private var deleting: URL?
+    @State private var sharedFile: SharedFile?
 
     var body: some View {
         List(selection: $selection) {
@@ -144,6 +145,9 @@ private struct PagesList: View {
             if !query.isEmpty { entries = await library.buildSearchIndex() }
         }
         .refreshable { library.refreshAll() }
+        .sheet(item: $sharedFile) { file in
+            ActivityView(items: [file.url])
+        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -233,12 +237,51 @@ private struct PagesList: View {
                 Button("Nieuwe pagina", systemImage: "square.and.pencil") {
                     selection = library.newPage(in: space.url)
                 }
+                Button("Deel als PDF", systemImage: "doc.richtext") { shareSpace(space) }
                 Button("Verwijder uit Blad", systemImage: "minus.circle", role: .destructive) {
                     library.removeSpace(space)
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
             }
+        }
+    }
+
+    /// A whole space as one PDF: a cover, a contents list with page numbers, then every page.
+    private func shareSpace(_ space: Library.Space) {
+        library.saveAll()
+        let pages = markdownPages(in: library.trees[space.url] ?? [])
+        guard !pages.isEmpty else {
+            library.errorMessage = "Deze ruimte heeft nog geen pagina's."
+            return
+        }
+
+        let defaults = UserDefaults.standard
+        let fontID = defaults.string(forKey: Pref.font) ?? EditorFont.defaultID
+        let fontSize = defaults.object(forKey: Pref.fontSize) as? Double ?? Pref.defaultFontSize
+        let sections = pages.map { page in
+            PDFExporter.Section(
+                title: page.deletingPathExtension().lastPathComponent,
+                text: library.document(for: page)?.text ?? (try? String(contentsOf: page, encoding: .utf8)) ?? "",
+                baseURL: page.deletingLastPathComponent()
+            )
+        }
+
+        do {
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let url = folder.appendingPathComponent(space.name).appendingPathExtension("pdf")
+            try PDFExporter.export(sections: sections, title: space.name, fontID: fontID, fontSize: fontSize, to: url)
+            sharedFile = SharedFile(url: url)
+        } catch {
+            library.errorMessage = "Kon \(space.name) niet delen.\n\n\(error.localizedDescription)"
+        }
+    }
+
+    /// Every page below these nodes, in the order the list shows them.
+    private func markdownPages(in nodes: [FileNode]) -> [URL] {
+        nodes.flatMap { node in
+            node.isDirectory ? markdownPages(in: node.children ?? []) : [node.url]
         }
     }
 

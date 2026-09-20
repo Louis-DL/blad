@@ -32,9 +32,47 @@ public sealed record CodeColours(string Keyword, string String, string Number, s
 /// <summary>Turns a page into one standalone HTML file that looks like reading mode.</summary>
 public static class HtmlExporter
 {
+    /// <summary>One page of a bundle: a note with the title it gets in the contents.</summary>
+    public sealed record Section(string Title, string Markdown, string PagePath);
+
+    /// <summary>A whole space as one page: a cover, a contents list, and every page after it,
+    /// each starting on a new sheet when it's printed.</summary>
+    public static string ExportBundle(IReadOnlyList<Section> sections, string title, ExportStyle style)
+    {
+        var contents = string.Join("\n", sections.Select(section => $"<li>{Escape(section.Title)}</li>"));
+        var pages = sections.Select(section =>
+            $"""
+            <section class="page">
+            <p class="running">{Escape(section.Title)}</p>
+            {string.Join("\n", MarkdownParser.Parse(section.Markdown).Select(block => Block(block, section.PagePath)))}
+            </section>
+            """);
+        var count = sections.Count == 1 ? "1 pagina" : $"{sections.Count} pagina's";
+        var body = $"""
+            <section class="cover">
+            <h1>{Escape(title)}</h1>
+            <p class="detail">{count}</p>
+            <p class="detail">{DateTime.Now:d MMMM yyyy}</p>
+            </section>
+            <section class="page contents">
+            <h2>Inhoud</h2>
+            <ol>
+            {contents}
+            </ol>
+            </section>
+            {string.Join("\n", pages)}
+            """;
+        return Document(title, body, style);
+    }
+
     public static string Export(string markdown, string title, string pagePath, ExportStyle style)
     {
         var body = string.Join("\n", MarkdownParser.Parse(markdown).Select(block => Block(block, pagePath)));
+        return Document(title, body, style);
+    }
+
+    private static string Document(string title, string body, ExportStyle style)
+    {
         return $"""
             <!doctype html>
             <html lang="nl">
@@ -186,6 +224,13 @@ public static class HtmlExporter
         th { font-weight: 600; background: {{s.CodeBackground}}; }
         tbody tr:nth-child(even) td { background: {{s.CodeBackground}}; }
         img { max-width: 100%; border-radius: 8px; }
+        .cover { padding-top: 22vh; }
+        .cover h1 { font-size: 2.6em; margin: 0 0 0.5em; }
+        .cover .detail { color: {{s.Secondary}}; margin: 0.2em 0; }
+        .contents ol { list-style: none; padding: 0; }
+        .contents li { padding: 0.35em 0; border-bottom: 1px solid {{s.CodeBackground}}; }
+        .running { color: {{s.Secondary}}; font-size: 0.8em; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 1.6em; }
+        @media print { .page { break-before: page; } }
         @media print { body { background: white; } main { padding: 0; max-width: none; } pre, table, blockquote, img { break-inside: avoid; } }
         """;
 

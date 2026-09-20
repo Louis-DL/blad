@@ -91,6 +91,8 @@ private struct WorkspaceHeader: View {
                     }
                 }
                 Divider()
+                Button("Exporteer ruimte als PDF…") { model.exportWorkspace(workspace) }
+                Divider()
                 Button("Toon in Finder") { NSWorkspace.shared.activateFileViewerSelecting([workspace]) }
                 Button("Verwijder uit zijbalk") { model.removeWorkspace(workspace) }
             }
