@@ -15,6 +15,11 @@ final class DocumentModel: Identifiable {
     /// Shows the rendered page instead of the markdown source.
     var isReading = false
 
+    /// Set by the outline to move the page to a heading; the editor and reading mode pick it up.
+    var jump: Jump?
+
+    var headings: [Heading] { Outline.headings(in: text) }
+
     var text: String {
         didSet {
             guard text != oldValue else { return }

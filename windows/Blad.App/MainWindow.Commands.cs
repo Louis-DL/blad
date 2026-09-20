@@ -46,6 +46,7 @@ public sealed partial class MainWindow
         Shortcut(VirtualKey.S, control, library.SaveAll);
         Shortcut(VirtualKey.R, control, ToggleReading);
         Shortcut(VirtualKey.F, control, ShowFind);
+        Shortcut(VirtualKey.O, controlShift, ShowOutline);
         Shortcut(VirtualKey.F3, VirtualKeyModifiers.None, () => { if (IsFindOpen) Step(1); });
         Shortcut(VirtualKey.F3, VirtualKeyModifiers.Shift, () => { if (IsFindOpen) Step(-1); });
         Shortcut(VirtualKey.F, controlShift, () => SetFocusMode(!isFocusMode));

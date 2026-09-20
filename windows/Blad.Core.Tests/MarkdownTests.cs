@@ -169,3 +169,28 @@ public class HtmlExporterTests
         Assert.Contains("background: #F4EFE5", html);
     }
 }
+
+public class OutlineTests
+{
+    [Fact]
+    public void ListsHeadingsWithTheirPlaceInTheText()
+    {
+        const string page = "# Titel\n\nTekst.\n\n## Deel een\n\n### Detail\n";
+        var headings = Outline.Headings(page);
+
+        Assert.Equal(3, headings.Count);
+        Assert.Equal(["Titel", "Deel een", "Detail"], headings.Select(heading => heading.Title));
+        Assert.Equal([1, 2, 3], headings.Select(heading => heading.Level));
+        Assert.Equal([0, 1, 2], headings.Select(heading => heading.Index));
+        Assert.Equal(page.IndexOf("## Deel een", StringComparison.Ordinal), headings[1].Offset);
+    }
+
+    [Fact]
+    public void SkipsHashesInsideCodeAndTrailingHashes()
+    {
+        var headings = Outline.Headings("```sh\n# geen kopje\n```\n\n# Wel een kopje #\n\n#geenruimte\n");
+
+        var heading = Assert.Single(headings);
+        Assert.Equal("Wel een kopje", heading.Title);
+    }
+}

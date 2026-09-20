@@ -46,6 +46,7 @@ struct EditorScreen: View {
                     fontSize: fontSize,
                     lineWidth: lineWidth,
                     backlinks: backlinks,
+                    jump: document.jump,
                     onToggleTask: { document.toggleTask(atLine: $0) },
                     onOpenBacklink: { model.openItem($0) }
                 )

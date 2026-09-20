@@ -22,6 +22,7 @@ struct PageScreen: View {
     @State private var isPickingPhoto = false
     @State private var photo: PhotosPickerItem?
     @State private var backlinks: [Backlink] = []
+    @State private var showsOutline = false
     @State private var isFocusMode = false
     @State private var sharedFile: SharedFile?
 
@@ -35,6 +36,7 @@ struct PageScreen: View {
                 onChange: { document.text = $0 },
                 onLinkTrigger: { isPickingLink = true },
                 onPhoto: { isPickingPhoto = true },
+                jump: document.jump,
                 importImages: importImages
             )
             .opacity(document.isReading ? 0 : 1)
@@ -49,6 +51,7 @@ struct PageScreen: View {
                     fontSize: fontSize,
                     lineWidth: lineWidth,
                     backlinks: backlinks,
+                    jump: document.jump,
                     onToggleTask: { document.toggleTask(atLine: $0) },
                     onOpenBacklink: onOpenPage
                 )
@@ -79,6 +82,23 @@ struct PageScreen: View {
         .toolbar { toolbar }
         .toolbar(isFocusMode ? .hidden : .automatic, for: .navigationBar)
         .statusBarHidden(isFocusMode)
+        .sheet(isPresented: $showsOutline) {
+            NavigationStack {
+                OutlineList(headings: document.headings) { heading in
+                    showsOutline = false
+                    document.jump = Jump(offset: heading.offset, heading: heading.id)
+                }
+                .navigationTitle("Overzicht")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Klaar") { showsOutline = false }
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .presentationBackground(Color(platform: theme.background))
+        }
         .sheet(isPresented: $isPickingLink) {
             LinkPicker(
                 pages: library.pageRefs,
@@ -145,6 +165,8 @@ struct PageScreen: View {
                 Button("Focusmodus", systemImage: "scope") {
                     withAnimation(.smooth) { isFocusMode = true }
                 }
+                Button("Overzicht", systemImage: "list.bullet.indent") { showsOutline = true }
+                    .keyboardShortcut("o", modifiers: [.command, .shift])
                 Button("Zoek in pagina", systemImage: "magnifyingglass") { editor.find() }
                     .keyboardShortcut("f")
                     .disabled(document.isReading)

@@ -78,6 +78,11 @@ struct MarkdownEditor: NSViewRepresentable {
             textView.applyStyle(style)
         }
 
+        if let jump = document.jump, coordinator.lastJump != jump.id {
+            coordinator.lastJump = jump.id
+            DispatchQueue.main.async { textView.jump(to: jump.offset) }
+        }
+
         if textView.string != text {
             coordinator.isApplyingModelText = true
             let selection = textView.selectedRange()
@@ -92,6 +97,7 @@ struct MarkdownEditor: NSViewRepresentable {
         var parent: MarkdownEditor
         weak var textView: EditorTextView?
         var isApplyingModelText = false
+        var lastJump: UUID?
 
         init(_ parent: MarkdownEditor) {
             self.parent = parent
@@ -213,6 +219,22 @@ final class EditorTextView: NSTextView {
         let vertical = isTypewriterActive ? (visibleHeight / 2).rounded() : 36
         let inset = NSSize(width: horizontal, height: vertical)
         if textContainerInset != inset { textContainerInset = inset }
+    }
+
+    /// Puts the caret at a heading the outline picked and brings it near the top.
+    func jump(to offset: Int) {
+        let length = (string as NSString).length
+        let location = min(max(0, offset), length)
+        setSelectedRange(NSRange(location: location, length: 0))
+        guard let layoutManager, let textContainer, let scrollView = enclosingScrollView else { return }
+        let glyphs = layoutManager.glyphRange(forCharacterRange: NSRange(location: location, length: 0), actualCharacterRange: nil)
+        let lineRect = layoutManager.boundingRect(forGlyphRange: glyphs, in: textContainer)
+        let clip = scrollView.contentView
+        let top = max(-scrollView.contentInsets.top, lineRect.minY + textContainerOrigin.y - 24)
+        let bottom = max(-scrollView.contentInsets.top, bounds.height - clip.bounds.height)
+        clip.animator().setBoundsOrigin(NSPoint(x: clip.bounds.origin.x, y: min(top, bottom)))
+        scrollView.reflectScrolledClipView(clip)
+        window?.makeFirstResponder(self)
     }
 
     override func scrollRangeToVisible(_ range: NSRange) {

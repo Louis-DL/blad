@@ -143,6 +143,17 @@
 
                 <StackPanel x:Name="PageActions" Orientation="Horizontal" Spacing="4" Margin="0,10,14,0"
                             HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <Button x:Name="OutlineButton" Background="Transparent" BorderThickness="0"
+                            ToolTipService.ToolTip="Kopjes van deze pagina (Ctrl+Shift+O)">
+                        <FontIcon Glyph="&#xE8FD;" FontSize="14" />
+                        <Button.Flyout>
+                            <Flyout x:Name="OutlineFlyout" Placement="BottomEdgeAlignedRight">
+                                <ScrollViewer MaxHeight="360" Width="280">
+                                    <StackPanel x:Name="OutlinePanel" />
+                                </ScrollViewer>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
                     <Button x:Name="ModeButton" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Lezen of bewerken (Ctrl+R)">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon x:Name="ModeIcon" Glyph="&#xE736;" FontSize="14" />

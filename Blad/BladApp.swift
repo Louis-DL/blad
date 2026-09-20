@@ -77,6 +77,9 @@ struct BladCommands: Commands {
         CommandGroup(after: .sidebar) {
             Button(model.isFocusMode ? "Verlaat focusmodus" : "Focusmodus") { model.toggleFocus() }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
+            Button("Overzicht") { model.isOutlinePresented.toggle() }
+                .keyboardShortcut("o", modifiers: [.command, .shift])
+                .disabled(model.activeDocument == nil)
             Button(model.activeDocument?.isReading == true ? "Bewerk bron" : "Leesmodus") {
                 model.activeDocument?.isReading.toggle()
             }

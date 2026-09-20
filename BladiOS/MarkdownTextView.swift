@@ -35,6 +35,8 @@ struct MarkdownTextView: UIViewRepresentable {
     /// Typing `[[` asks for a page to link to.
     let onLinkTrigger: () -> Void
     let onPhoto: () -> Void
+    /// Set by the outline; moves the editor to that heading.
+    var jump: Jump?
     let importImages: (ImageImporter.Source) -> [String]
 
     func makeCoordinator() -> Coordinator {
@@ -59,6 +61,10 @@ struct MarkdownTextView: UIViewRepresentable {
 
     func updateUIView(_ textView: BladTextView, context: Context) {
         context.coordinator.parent = self
+        if let jump, context.coordinator.lastJump != jump.id {
+            context.coordinator.lastJump = jump.id
+            DispatchQueue.main.async { textView.jump(to: jump.offset) }
+        }
         controller.textView = textView
         if textView.baseURL != baseURL { textView.baseURL = baseURL }
         if textView.styler.style != style { textView.applyStyle(style) }
@@ -70,6 +76,7 @@ struct MarkdownTextView: UIViewRepresentable {
     }
 
     final class Coordinator: NSObject, UITextViewDelegate, NSTextStorageDelegate {
+        var lastJump: UUID?
         var parent: MarkdownTextView
         weak var textView: BladTextView?
         private var typedOpeningBracket = false
@@ -170,6 +177,19 @@ final class BladTextView: UITextView {
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) is not supported")
+    }
+
+    /// Puts the caret at a heading the outline picked and brings it near the top.
+    func jump(to offset: Int) {
+        let length = (text as NSString).length
+        let location = min(max(0, offset), length)
+        selectedRange = NSRange(location: location, length: 0)
+        let caret = layoutManager.boundingRect(
+            forGlyphRange: layoutManager.glyphRange(forCharacterRange: selectedRange, actualCharacterRange: nil),
+            in: textContainer
+        )
+        let top = min(max(0, caret.minY + textContainerInset.top - 16), max(0, contentSize.height - bounds.height))
+        setContentOffset(CGPoint(x: 0, y: top - adjustedContentInset.top), animated: true)
     }
 
     func applyStyle(_ style: EditorStyle) {

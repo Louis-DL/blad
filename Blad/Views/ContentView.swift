@@ -127,6 +127,26 @@ struct DetailView: View {
 
         ToolbarItem(placement: .primaryAction) {
             Button {
+                model.isOutlinePresented.toggle()
+            } label: {
+                Label("Overzicht", systemImage: "list.bullet.indent")
+            }
+            .disabled(model.activeDocument == nil)
+            .help("Kopjes van deze pagina (⇧⌘O)")
+            .popover(
+                isPresented: Binding(get: { model.isOutlinePresented }, set: { model.isOutlinePresented = $0 }),
+                arrowEdge: .bottom
+            ) {
+                OutlineList(headings: model.activeDocument?.headings ?? []) { heading in
+                    model.activeDocument?.jump = Jump(offset: heading.offset, heading: heading.id)
+                    model.isOutlinePresented = false
+                }
+                .frame(width: 280, height: 360)
+            }
+        }
+
+        ToolbarItem(placement: .primaryAction) {
+            Button {
                 model.toggleFocus()
             } label: {
                 Label("Focusmodus", systemImage: "scope")

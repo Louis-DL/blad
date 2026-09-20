@@ -19,6 +19,7 @@ public sealed class ReadingView : UserControl
     private static readonly double[] HeadingScale = [1.7, 1.4, 1.2, 1.08, 1.0, 1.0];
 
     private readonly StackPanel column = new();
+    private readonly List<FrameworkElement> headingViews = [];
     private Theme theme = Theme.Paper;
     private string pagePath = "";
 
@@ -48,6 +49,7 @@ public sealed class ReadingView : UserControl
         theme = pageTheme;
         pagePath = document.Path;
         column.Children.Clear();
+        headingViews.Clear();
         column.MaxWidth = AppSettings.Current.LineWidth + 80;
         column.Padding = new Thickness(40, 40, 40, 100);
         column.Spacing = Size * 0.95;
@@ -55,12 +57,25 @@ public sealed class ReadingView : UserControl
         var blocks = MarkdownParser.Parse(document.Text);
         for (var i = 0; i < blocks.Count; i++)
         {
-            column.Children.Add(View(blocks[i], isFirst: i == 0));
+            var view = View(blocks[i], isFirst: i == 0);
+            if (blocks[i] is MarkdownBlock.Heading) headingViews.Add(view);
+            column.Children.Add(view);
         }
         if (backlinks.Count > 0)
         {
             column.Children.Add(Backlinks(backlinks));
         }
+    }
+
+    /// <summary>Brings the nth heading of the page to the top, for the outline.</summary>
+    public void ScrollToHeading(int index)
+    {
+        if (index < 0 || index >= headingViews.Count) return;
+        headingViews[index].StartBringIntoView(new BringIntoViewOptions
+        {
+            VerticalAlignmentRatio = 0,
+            AnimationDesired = true,
+        });
     }
 
     private FrameworkElement View(MarkdownBlock block, bool isFirst) => block switch

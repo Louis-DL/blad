@@ -27,6 +27,8 @@ final class AppModel {
     var renameText = ""
     var errorMessage: String?
     var isQuickOpenPresented = false
+    /// The list of headings of the open page, shown from the toolbar.
+    var isOutlinePresented = false
 
     var activeDocument: DocumentModel? {
         documents.first { $0.id == activeDocumentID }

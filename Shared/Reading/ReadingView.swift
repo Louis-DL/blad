@@ -14,31 +14,51 @@ struct ReadingView: View {
     let fontSize: CGFloat
     let lineWidth: CGFloat
     let backlinks: [Backlink]
+    /// Set by the outline; scrolls to that heading.
+    var jump: Jump?
     let onToggleTask: (Int) -> Void
     let onOpenBacklink: (URL) -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                ReadingContent(
-                    blocks: MarkdownBlock.parse(text),
-                    baseURL: baseURL,
-                    theme: theme,
-                    fontID: fontID,
-                    fontSize: fontSize,
-                    onToggleTask: onToggleTask
-                )
-                if !backlinks.isEmpty {
-                    BacklinksSection(backlinks: backlinks, theme: theme, onOpen: onOpenBacklink)
-                        .padding(.top, fontSize * 3)
+        let blocks = MarkdownBlock.parse(text)
+        ScrollViewReader { scroller in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ReadingContent(
+                        blocks: blocks,
+                        baseURL: baseURL,
+                        theme: theme,
+                        fontID: fontID,
+                        fontSize: fontSize,
+                        onToggleTask: onToggleTask
+                    )
+                    if !backlinks.isEmpty {
+                        BacklinksSection(backlinks: backlinks, theme: theme, onOpen: onOpenBacklink)
+                            .padding(.top, fontSize * 3)
+                    }
                 }
+                .frame(maxWidth: lineWidth, alignment: .leading)
+                .padding(.horizontal, 40)
+                .padding(.top, 40)
+                .padding(.bottom, 100)
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: lineWidth, alignment: .leading)
-            .padding(.horizontal, 40)
-            .padding(.top, 40)
-            .padding(.bottom, 100)
-            .frame(maxWidth: .infinity)
+            .onChange(of: jump) { _, jump in
+                guard let jump, let block = Self.blockIndex(ofHeading: jump.heading, in: blocks) else { return }
+                withAnimation(.easeOut(duration: 0.2)) { scroller.scrollTo(block, anchor: .top) }
+            }
         }
+    }
+
+    /// Reading mode shows the same headings in the same order, so the nth one is the nth block heading.
+    private static func blockIndex(ofHeading number: Int, in blocks: [MarkdownBlock]) -> Int? {
+        var seen = 0
+        for (index, block) in blocks.enumerated() {
+            guard case .heading = block else { continue }
+            if seen == number { return index }
+            seen += 1
+        }
+        return nil
     }
 }
 

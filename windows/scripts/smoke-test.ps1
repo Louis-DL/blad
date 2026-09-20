@@ -142,6 +142,13 @@ Start-Sleep -Seconds 1
 [System.Windows.Forms.SendKeys]::SendWait("^{END}")
 Start-Sleep -Seconds 2
 Save-Screen "5-einde"
+
+# 5b. The outline of the page (Ctrl+Shift+O).
+[System.Windows.Forms.SendKeys]::SendWait("^+o")
+Start-Sleep -Seconds 2
+Save-Screen "5b-overzicht"
+[System.Windows.Forms.SendKeys]::SendWait("{ESC}")
+Start-Sleep -Seconds 1
 Stop-Blad $blad
 
 # 6. Night theme with Georgia, with the caret in the text (a few shots, it blinks).
