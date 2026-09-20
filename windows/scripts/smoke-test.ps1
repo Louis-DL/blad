@@ -11,6 +11,8 @@ using System.Runtime.InteropServices;
 public static class Win {
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr window, int command);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr window);
+    [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] public static extern void mouse_event(uint flags, uint x, uint y, uint data, IntPtr extra);
 }
 "@
 
@@ -32,6 +34,14 @@ function Save-Screen([string]$name) {
     $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
     $bitmap.Save((Join-Path $Out "$name.png"))
     $graphics.Dispose(); $bitmap.Dispose()
+}
+
+function Click([int]$x, [int]$y) {
+    [Win]::SetCursorPos($x, $y) | Out-Null
+    Start-Sleep -Milliseconds 300
+    [Win]::mouse_event(0x0002, 0, 0, 0, [IntPtr]::Zero)   # left button down
+    [Win]::mouse_event(0x0004, 0, 0, 0, [IntPtr]::Zero)   # left button up
+    Start-Sleep -Milliseconds 700
 }
 
 function Start-Blad {
@@ -170,8 +180,8 @@ Start-Sleep -Seconds 2
 Save-Screen "9-zoek-in-pagina"
 [System.Windows.Forms.SendKeys]::SendWait("{ESC}")
 Start-Sleep -Seconds 1
-[System.Windows.Forms.SendKeys]::SendWait("^,")
-Start-Sleep -Seconds 3
+Click 70 695   # Instellingen, bottom left of the sidebar
+Start-Sleep -Seconds 2
 Save-Screen "10-instellingen"
 [System.Windows.Forms.SendKeys]::SendWait("{ESC}")
 Start-Sleep -Seconds 1
