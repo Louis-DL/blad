@@ -4,15 +4,34 @@ Een rustige markdown-editor voor macOS, iPhone en Windows. Voor notities en READ
 de opmaak blijft zichtbaar maar stil, en je pagina's blijven gewone `.md`-bestanden in
 gewone mappen.
 
-Blad is een pre-release. Het werkt, maar er kunnen nog foutjes in zitten.
+![Blad op de Mac, met een ruimte per vak en de markdown zichtbaar maar stil](docs/editor.png)
+
+## Zo ziet het eruit
+
+In leesmodus valt de syntax weg en blijft de tekst staan. Taken vink je hier af.
+
+![Leesmodus](docs/lezen.png)
+
+Codeblokken krijgen kleur, ook in wat je exporteert, en een `#tag` verzamelt pagina's uit al je ruimtes.
+
+![Een README in leesmodus, met gekleurde code](docs/code.png)
+
+Vier thema's: Papier, Licht, Nacht en Automatisch.
+
+![Hetzelfde in het thema Nacht](docs/nacht.png)
+
+Dezelfde app op Windows, met dezelfde bestanden.
+
+![Blad op Windows 11](docs/windows.png)
 
 ## Downloaden
 
 Alles staat bij [Releases](https://github.com/Louis-DL/blad/releases).
 
-- **Mac**: `Blad-0.1.dmg`, open het en sleep Blad naar Programma's. De eerste keer kent macOS
+
+- **Mac**: `Blad-1.0.dmg`, open het en sleep Blad naar Programma's. De eerste keer kent macOS
   Blad nog niet: sta het toe bij Systeeminstellingen › Privacy en beveiliging. Vereist macOS 27.
-- **Windows**: `Blad-0.1-windows-x64.zip`, uitpakken en `Blad.exe` starten. Installeren hoeft niet.
+- **Windows**: `Blad-1.0-windows-x64.zip`, uitpakken en `Blad.exe` starten. Installeren hoeft niet.
   Windows toont eerst "Windows heeft uw pc beschermd" omdat de app niet ondertekend is: klik op
   Meer info › Toch uitvoeren. Vereist Windows 10 of 11 (64-bit).
 - **iPhone en iPad**: nog geen download. Bouw hem zelf met Xcode (zie hieronder).
@@ -97,8 +116,10 @@ De drie versies delen geen code met elkaar, maar wel dezelfde regels: hoe markdo
 hoe links werken en hoe een pagina eruitziet. Wat in `Shared/` in Swift staat, staat in
 `windows/Blad.Core/` in C#, met tests die dat gedrag vastleggen.
 
-## Wat nog niet af is
+## Goed om te weten
 
-- De Windows-versie is de nieuwste en het minst gebruikt.
-- De iPhone-versie staat niet in de App Store; je zet hem zelf op je toestel.
+- De Windows-versie is de jongste van de drie en dus het minst gebruikt.
+- De iPhone-versie staat niet in de App Store; je zet hem zelf op je toestel met Xcode.
 - Geen automatische updates: nieuwe versies haal je bij Releases.
+- De apps zijn niet ondertekend met een betaald certificaat, vandaar de waarschuwing bij de
+  eerste start.
